@@ -9,6 +9,7 @@ import numpy as np
 import torch
 
 from models import parse_gan_type
+from visualization import lerp_matrix
 from utils import load_generator, analyze_latent_space
 
 
@@ -27,37 +28,34 @@ def parse_args():
     parser.add_argument('-L', '--layer_idx', type=str, default='all',
                         help='Indices of layers to interpret. '
                              '(default: %(default)s)')
-    #parser.add_argument('-N', '--num_samples', type=int, default=5,
-    #                    help='Number of samples used for visualization. '
-    #                         '(default: %(default)s)')
+    parser.add_argument('-N', '--num_samples', type=int, default=3,
+                        help='Number of samples used for visualization. '
+                             '(default: %(default)s)')
     parser.add_argument('-C', '--num_components', type=int, default=512,
                         help='Number of semantic boundaries. '
                             '(default: %(default)s)')
     parser.add_argument('-M', '--num_modes', type=int, default=1,
                         help='Number of modes of variation. '
                             '(default: %(default)s)')
-    #parser.add_argument('--start_distance', type=float, default=-3.0,
-    #                    help='Start point for manipulation on each semantic. '
-    #                         '(default: %(default)s)')
-    #parser.add_argument('--end_distance', type=float, default=3.0,
-    #                    help='Ending point for manipulation on each semantic. '
-    #                         '(default: %(default)s)')
-    #parser.add_argument('--step', type=int, default=11,
-    #                    help='Manipulation step on each semantic. '
-    #                         '(default: %(default)s)')
-    #parser.add_argument('--viz_size', type=int, default=256,
-    #                    help='Size of images to visualize on the HTML page. '
-    #                         '(default: %(default)s)')
-    #parser.add_argument('--trunc_psi', type=float, default=0.7,
-    #                    help='Psi factor used for truncation. This is '
-    #                         'particularly applicable to StyleGAN (v1/v2). '
-    #                         '(default: %(default)s)')
-    #parser.add_argument('--trunc_layers', type=int, default=8,
-    #                    help='Number of layers to perform truncation. This is '
-    #                         'particularly applicable to StyleGAN (v1/v2). '
-    #                         '(default: %(default)s)')
-    #parser.add_argument('--seed', type=int, default=0,
-    #                    help='Seed for sampling. (default: %(default)s)')
+    parser.add_argument('--start_distance', type=float, default=-5.0,
+                        help='Start point for manipulation on each semantic. '
+                             '(default: %(default)s)')
+    parser.add_argument('--end_distance', type=float, default=5.0,
+                        help='Ending point for manipulation on each semantic. '
+                             '(default: %(default)s)')
+    parser.add_argument('--step', type=int, default=7,
+                        help='Manipulation step on each semantic. '
+                             '(default: %(default)s)')
+    parser.add_argument('--trunc_psi', type=float, default=0.7,
+                        help='Psi factor used for truncation. This is '
+                             'particularly applicable to StyleGAN (v1/v2). '
+                             '(default: %(default)s)')
+    parser.add_argument('--trunc_layers', type=int, default=8,
+                        help='Number of layers to perform truncation. This is '
+                             'particularly applicable to StyleGAN (v1/v2). '
+                             '(default: %(default)s)')
+    parser.add_argument('--seed', type=int, default=0,
+                        help='Seed for sampling. (default: %(default)s)')
     #parser.add_argument('--gpu_id', type=str, default='0',
     #                    help='GPU(s) to use. (default: %(default)s)')
     return parser.parse_args()
@@ -67,7 +65,6 @@ def main():
     """Main function."""
     args = parse_args()
     #os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu_id
-    os.makedirs(args.save_dir, exist_ok=True)
 
     # Factorize weights.
     generator = load_generator(args.model_name)
@@ -78,45 +75,54 @@ def main():
                                         args.num_modes,
                                         args.layer_idx)
 
-    semantic_idx = int(input(
-                    '> Enter the index of the semantic you wish to save : '))
-    attribute_name = input('> Enter a label describing the semantic '
-            'attribute : ')
+    #semantic_idx = int(input(
+    #                '> Enter the index of the semantic you wish to save : '))
+    #attribute_name = input('> Enter a label describing the semantic '
+    #        'attribute : ')
 
-    semantics_dir = f'semantics/{args.method_name}'
-    os.makedirs(semantics_dir, exist_ok=True)
-    np.save(os.path.join(semantics_dir, f'{args.model_name}_{attribute_name}.npy'), basis[:, semantic_idx])
+    #semantics_dir = f'semantics/{args.method_name}'
+    #os.makedirs(semantics_dir, exist_ok=True)
+    #np.save(os.path.join(semantics_dir, f'{args.model_name}_{attribute_name}.npy'), basis[:, semantic_idx])
 
 
-    ## Set random seed.
-    #np.random.seed(args.seed)
-    #torch.manual_seed(args.seed)
+    # Set random seed.
+    np.random.seed(args.seed)
+    torch.manual_seed(args.seed)
 
-    ## Prepare codes.
-    #codes = torch.randn(args.num_samples, generator.z_space_dim).cuda()
-    #if gan_type == 'pggan':
-    #    codes = generator.layer0.pixel_norm(codes)
-    #elif gan_type in ['stylegan', 'stylegan2']:
-    #    codes = generator.mapping(codes)['w']
-    #    codes = generator.truncation(codes,
-    #                                 trunc_psi=args.trunc_psi,
-    #                                 trunc_layers=args.trunc_layers)
-    #codes = codes.detach().cpu().numpy()
+    # Prepare latent codes.
+    codes = torch.randn(args.num_samples, generator.z_space_dim).cuda()
+    if gan_type == 'pggan':
+        codes = generator.layer0.pixel_norm(codes)
+    elif gan_type in ['stylegan', 'stylegan2']:
+        codes = generator.mapping(codes)['w']
+        codes = generator.truncation(codes,
+                                     trunc_psi=args.trunc_psi,
+                                     trunc_layers=args.trunc_layers)
+    codes = codes.detach().cpu()
 
-    ## Generate visualization pages.
-    #distances = np.linspace(args.start_distance,args.end_distance, args.step)
-    #num_sam = args.num_samples
-    #num_sem = args.num_semantics
-    #vizer_1 = HtmlPageVisualizer(num_rows=num_sem * (num_sam + 1),
-    #                             num_cols=args.step + 1,
-    #                             viz_size=args.viz_size)
-    #vizer_2 = HtmlPageVisualizer(num_rows=num_sam * (num_sem + 1),
-    #                             num_cols=args.step + 1,
-    #                             viz_size=args.viz_size)
+    # Visualization : linear interpolation in the GAN latent space.
+    distances = np.linspace(args.start_distance,args.end_distance, args.step)
 
-    #headers = [''] + [f'Distance {d:.2f}' for d in distances]
-    #vizer_1.set_headers(headers)
-    #vizer_2.set_headers(headers)
+    vis_id = int(input('\n> Choose one of the visualization options below:\n'
+        '1. Linear interpolation using the first K directions (columns) discovered\n'
+        '2. Linear interpolation using the tensorized multilinear basis of mdd\n'
+        '3. Compare MddGAN to one of InterFaceGAN or SeFa\n'
+        'Your option : '))
+
+    assert vis_id in [1, 2, 3], 'Invalid visualization option!'
+    
+    os.makedirs(args.save_dir, exist_ok=True)
+
+    if vis_id == 1:
+        print(basis.shape)
+        lerp_matrix(generator, layers, basis, codes, args.num_samples, distances,
+                args.step, gan_type, args.save_dir, title=args.method_name)
+
+    elif vis_id == 2:
+        print(basis.shape)
+        print('Not implemented')
+        #lerp_tensor()
+
     #for sem_id in range(num_sem):
     #    value = values[sem_id]
     #    vizer_1.set_cell(sem_id * (num_sam + 1), 0,
