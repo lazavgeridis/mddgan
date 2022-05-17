@@ -4,10 +4,12 @@ import os
 import torch
 import numpy as np
 
+from utils import select_bases
 from PIL import Image
 from tqdm import tqdm
 from torchvision.utils import make_grid
 from matplotlib import pyplot as plt
+
 
 def postprocess(images, min_val=-1.0, max_val=1.0):
     """Post-processes images from `torch.Tensor` to `numpy.ndarray`.
@@ -67,18 +69,28 @@ def interpolation(G, layers, gan_type, proj_code, direction, distances):
   return images_per_direction
 
 
-def interpolation_chart_col(G, layers, gan_type, basis, proj_code, distances,
-        step, directions_per_page, begin, end, title, **kwargs):
+def interpolation_chart(G,
+                        layers,
+                        gan_type,
+                        basis,
+                        proj_code,
+                        distances,
+                        step,
+                        title,
+                        n_directions,
+                        begin=None,
+                        end=None,
+                        **kwargs):
     '''Create a pyplot figure with `directions_per_page` interpolation grids centered around `proj_code` vector'''
 
     # prepare `directions_per_page` single row interpolation grids
     rowgrids_per_page = []
-    for i in range(end - begin):
+    for i in range(n_directions):
         direction = basis[:, i]
         rowgrids_per_page.append(interpolation(G, layers, gan_type, proj_code, direction, distances)) # create interpolation grid for direction `direction`
 
     # create a figure with `directions_per_page` + 1 rows
-    rows_num = min(directions_per_page, basis.shape[1]) + 1
+    rows_num = min(n_directions, basis.shape[1]) + 1
     fig, axs = plt.subplots(nrows=rows_num, **kwargs) # **kwargs are passed to pyplot.figure()
     fig.suptitle(title)
 
@@ -88,18 +100,35 @@ def interpolation_chart_col(G, layers, gan_type, basis, proj_code, distances,
     axs[0].imshow(postprocess(original_image))
 
     # plot each interpolation grid on the corresponing row
-    desc = range(begin, end)
+    if begin is not None and end is not None:
+        desc = range(begin, end)
+    else:
+        desc = range(n_directions)
     for ax, direction_interp, text in zip(axs[1:], rowgrids_per_page, desc):
         ax.axis('off')
-        plt.subplots_adjust(left=0.25)  # setting left=0.2 or lower eliminates whitespace between charts
+        #plt.subplots_adjust(left=0.25)  # setting left=0.2 or lower eliminates whitespace between charts
         ax.imshow(postprocess(make_grid(direction_interp, nrow=step)))
-        #ax.text(0, 1, str(text), fontsize='xx-small')
+        ax.text(0, 0.5, str(text),
+                horizontalalignment='right',
+                verticalalignment='center',
+                fontsize='xx-small',
+                transform=ax.transAxes)
 
     return fig
 
 
-def lerp_matrix(G, layers, basis_matrix, proj_codes, n_samples, magnitudes,
-        step, gan_type, results_dir, title='', max_columns=45, directions_per_page=15):
+def lerp_matrix(G,
+                layers,
+                basis_matrix,
+                proj_codes,
+                n_samples,
+                magnitudes,
+                step,
+                gan_type,
+                results_dir,
+                title='',
+                max_columns=45,
+                directions_per_page=15):
     """Linear interpolation using the columns of the basis matrix."""
 
     assert basis_matrix.ndim == 2
@@ -114,9 +143,9 @@ def lerp_matrix(G, layers, basis_matrix, proj_codes, n_samples, magnitudes,
         # create an interpolation chart for each sample
         for sample_id in tqdm(range(n_samples), desc='Sample', leave=False):
           code = proj_codes[sample_id:sample_id + 1]
-          fig = interpolation_chart_col(G, layers, gan_type, matrix, code,
-                                        magnitudes, step, directions_per_page, begin, end, title,
-                                        dpi=600)
+          fig = interpolation_chart(G, layers, gan_type, matrix, code,
+                  magnitudes, step, title, end - begin,
+                  begin=begin, end=end, dpi=600, constrained_layout=True)
 
           # draw chart and append it to `charts` list
           charts.append(draw_chart(fig))
@@ -129,3 +158,56 @@ def lerp_matrix(G, layers, basis_matrix, proj_codes, n_samples, magnitudes,
         out_file = os.path.join(results_dir, f'directions_{begin}_{end}.jpg')
         print('Saving chart to ', out_file)
         Image.fromarray(np.hstack(charts)).save(out_file) # concatenate figures column-wise
+
+
+def lerp_tensor(G, 
+                layers,
+                basis,
+                basis_dims,
+                proj_codes,
+                n_samples,
+                magnitudes,
+                step,
+                gan_type,
+                results_dir,
+                title='',
+                directions_per_page=15,
+                n_secondary_bases=3):
+    """Short description"""
+
+    # tensorize basis matrix, if needed
+    if basis.ndim == 2:
+        basis = basis.reshape(basis.shape[0], *basis_dims)
+
+    for primary_mode_idx, primary_mode_dim in enumerate(basis_dims):
+        mode_dir = os.path.join(results_dir, f'Mode_{primary_mode_idx + 1}')
+        os.makedirs(mode_dir, exist_ok=True)
+        for secondary_mode_idx, secondary_mode_dim in enumerate(basis_dims):
+            if primary_mode_idx == secondary_mode_idx:
+                continue
+            for base_idx in range(min(n_secondary_bases, secondary_mode_dim)):
+
+        #for secondary_base_idx in range(n_secondary_bases):
+                charts = []
+                for sample_id in range(n_samples):
+                    code = proj_codes[sample_id:sample_id + 1]
+                    #bases, subscript = select_bases(basis, primary_mode_idx, secondary_base_idx, len(basis_dims))
+                    bases, subscript = select_bases(basis, primary_mode_idx, secondary_mode_idx, base_idx, len(basis_dims))
+                    directions_num = min(directions_per_page, bases.shape[1])
+
+                    # create figure 
+                    fig = interpolation_chart(G, layers, gan_type, bases, code,
+                            magnitudes, step, title,
+                            directions_num, dpi=600, constrained_layout=True)
+
+                    # draw chart and append it to `charts` list
+                    charts.append(draw_chart(fig))
+
+                    # conserve memory
+                    fig.clf()
+                    plt.close(fig)
+
+                # concat charts into a single grid, save the grid
+                out_file = os.path.join(mode_dir, f'B[{subscript}].jpg')
+                print('Saving chart to ', out_file)
+                Image.fromarray(np.hstack(charts)).save(out_file) # concatenate figures column-wise

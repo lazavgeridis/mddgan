@@ -294,6 +294,48 @@ def analyze_latent_space(method, generator, n_components, n_modes, layer_idx='al
     elif method == 'sefa':
         weight = weight / np.linalg.norm(weight, axis=0, keepdims=True)
         _, basis = np.linalg.eig(weight.dot(weight.T))
+        K = None
+
+    return layers, basis, K
 
 
-    return layers, basis
+def select_bases(basis_tensor, primary_mode_idx, secondary_mode_idx, base_idx, n_modes):
+    """ """
+    # basis tensor has shape : (d, K2, K3)
+    if n_modes == 2:
+        if primary_mode_idx == 0:   # (:, :, idx)
+            bases = basis_tensor[:, :, base_idx]
+            subscript = f':, :, {base_idx}'
+        elif primary_mode_idx == 1: # (:, idx, :)
+            bases = basis_tensor[:, base_idx, :]
+            subscript = f':, {base_idx}, :'
+
+    # basis tensor has shape : (d, K2, K3, K4)
+    elif n_modes == 3:
+        if primary_mode_idx == 0:
+            if secondary_mode_idx == 1:     # (:, :, idx, 0)
+                bases = basis_tensor[:, :, base_idx, 0]
+                subscript = f':, :, {base_idx}, 0'
+            elif secondary_mode_idx == 2:   # (:, :, 0, idx)
+                bases = basis_tensor[:, :, 0, base_idx]
+                subscript = f':, :, 0, {base_idx}'
+        elif primary_mode_idx == 1:
+            if secondary_mode_idx == 0:     # (:, idx, :, 0)
+                bases = basis_tensor[:, base_idx, :, 0]
+                subscript = f':, {base_idx}, :, 0'
+            elif secondary_mode_idx == 2:   # (:, 0, :, idx)
+                bases = basis_tensor[:, 0, :, base_idx]
+                subscript = f':, 0, :, {base_idx}'
+        elif primary_mode_idx == 2:
+            if secondary_mode_idx == 0:     # (:, idx, 0, :)
+                bases = basis_tensor[:, base_idx, 0, :]
+                subscript = f':, {base_idx}, 0, :'
+            elif secondary_mode_idx == 1:   # (:, 0, idx, :)
+                bases = basis_tensor[:, 0, base_idx, :]
+                subscript = f':, 0, {base_idx}, :'
+
+    # basis tensor has shape : (d, K2, K3, K4, K5)
+    elif n_modes == 4:
+        pass
+
+    return bases, subscript

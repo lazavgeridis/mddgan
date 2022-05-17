@@ -3,13 +3,14 @@ File Description
 '''
 
 import os
+import shutil
 import argparse
 import numpy as np
 
 import torch
 
 from models import parse_gan_type
-from visualization import lerp_matrix
+from visualization import lerp_matrix, lerp_tensor
 from utils import load_generator, analyze_latent_space
 
 
@@ -69,7 +70,7 @@ def main():
     # Factorize weights.
     generator = load_generator(args.model_name)
     gan_type = parse_gan_type(generator)
-    layers, basis = analyze_latent_space(args.method_name,
+    layers, basis, dims = analyze_latent_space(args.method_name,
                                         generator,
                                         args.num_components,
                                         args.num_modes,
@@ -111,7 +112,9 @@ def main():
 
     assert vis_id in [1, 2, 3], 'Invalid visualization option!'
     
-    os.makedirs(args.save_dir, exist_ok=True)
+    if os.path.isdir(args.save_dir):
+        shutil.rmtree(args.save_dir)
+    os.makedirs(args.save_dir)
 
     if vis_id == 1:
         print(basis.shape)
@@ -120,48 +123,9 @@ def main():
 
     elif vis_id == 2:
         print(basis.shape)
-        print('Not implemented')
-        #lerp_tensor()
-
-    #for sem_id in range(num_sem):
-    #    value = values[sem_id]
-    #    vizer_1.set_cell(sem_id * (num_sam + 1), 0,
-    #                     text=f'Semantic {sem_id:03d}<br>({value:.3f})',
-    #                     highlight=True)
-    #    for sam_id in range(num_sam):
-    #        vizer_1.set_cell(sem_id * (num_sam + 1) + sam_id + 1, 0,
-    #                         text=f'Sample {sam_id:03d}')
-    #for sam_id in range(num_sam):
-    #    vizer_2.set_cell(sam_id * (num_sem + 1), 0,
-    #                     text=f'Sample {sam_id:03d}',
-    #                     highlight=True)
-    #    for sem_id in range(num_sem):
-    #        value = values[sem_id]
-    #        vizer_2.set_cell(sam_id * (num_sem + 1) + sem_id + 1, 0,
-    #                         text=f'Semantic {sem_id:03d}<br>({value:.3f})')
-
-    #for sam_id in tqdm(range(num_sam), desc='Sample ', leave=False):
-    #    code = codes[sam_id:sam_id + 1]
-    #    for sem_id in tqdm(range(num_sem), desc='Semantic ', leave=False):
-    #        boundary = boundaries[sem_id:sem_id + 1]
-    #        for col_id, d in enumerate(distances, start=1):
-    #            temp_code = code.copy()
-    #            if gan_type == 'pggan':
-    #                temp_code += boundary * d
-    #                image = generator(to_tensor(temp_code))['image']
-    #            elif gan_type in ['stylegan', 'stylegan2']:
-    #                temp_code[:, layers, :] += boundary * d
-    #                image = generator.synthesis(to_tensor(temp_code))['image']
-    #            image = postprocess(image)[0]
-    #            vizer_1.set_cell(sem_id * (num_sam + 1) + sam_id + 1, col_id,
-    #                             image=image)
-    #            vizer_2.set_cell(sam_id * (num_sem + 1) + sem_id + 1, col_id,
-    #                             image=image)
-
-    #prefix = (f'{args.model_name}_'
-    #          f'N{num_sam}_K{num_sem}_L{args.layer_idx}_seed{args.seed}')
-    #vizer_1.save(os.path.join(args.save_dir, f'{prefix}_sample_first.html'))
-    #vizer_2.save(os.path.join(args.save_dir, f'{prefix}_semantic_first.html'))
+        lerp_tensor(generator, layers, basis, dims, codes, args.num_samples,
+                distances, args.step, gan_type, args.save_dir,
+                title=args.method_name)
 
 
 if __name__ == '__main__':
