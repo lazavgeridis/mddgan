@@ -20,7 +20,7 @@ def parse_args():
         description='Discover semantics from the pre-trained weight.')
     parser.add_argument('model_name', type=str,
                         help='Name to the pre-trained model.')
-    parser.add_argument('method_name', type=str, choices=['mddgan', 'sefa'],
+    parser.add_argument('method_name', type=str, choices=['mddgan', 'sefa', 'both'],
                         help='Name of the method to use when analyzing the '
                         'GAN latent space.')
     parser.add_argument('--save_dir', type=str, default='results',
@@ -70,7 +70,7 @@ def main():
     # Factorize weights.
     generator = load_generator(args.model_name)
     gan_type = parse_gan_type(generator)
-    layers, basis, dims = analyze_latent_space(args.method_name,
+    layers, basis, dims = analyze_latent_space('mddgan' if args.method_name == 'both' else args.method_name,
                                         generator,
                                         args.num_components,
                                         args.num_modes,
@@ -107,7 +107,7 @@ def main():
     vis_id = int(input('\n> Choose one of the visualization options below:\n'
         '1. Linear interpolation using the first K directions (columns) discovered\n'
         '2. Linear interpolation using the tensorized multilinear basis of mdd\n'
-        '3. Compare MddGAN to one of InterFaceGAN or SeFa\n'
+        '3. Compare MddGAN to SeFa\n'
         'Your option : '))
 
     assert vis_id in [1, 2, 3], 'Invalid visualization option!'
@@ -118,14 +118,24 @@ def main():
 
     if vis_id == 1:
         print(basis.shape)
-        lerp_matrix(generator, layers, basis, codes, args.num_samples, distances,
-                args.step, gan_type, args.save_dir, title=args.method_name)
+        lerp_matrix(generator, gan_type, layers, [basis], codes, args.num_samples, distances,
+                args.step, args.save_dir)
 
     elif vis_id == 2:
         print(basis.shape)
         lerp_tensor(generator, layers, basis, dims, codes, args.num_samples,
-                distances, args.step, gan_type, args.save_dir,
-                title=args.method_name)
+                distances, args.step, gan_type, args.save_dir)
+
+    else:
+        assert args.method_name == 'both'
+        if dims is not None:
+            _, basis_sefa, _ = analyze_latent_space('sefa',
+                    generator,
+                    None,
+                    None,
+                    args.layer_idx)
+        lerp_matrix(generator, gan_type, layers, [basis, basis_sefa], codes, args.num_samples,
+                distances, args.step, args.save_dir)
 
 
 if __name__ == '__main__':

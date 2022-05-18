@@ -300,7 +300,7 @@ def analyze_latent_space(method, generator, n_components, n_modes, layer_idx='al
 
 
 def select_bases(basis_tensor, primary_mode_idx, secondary_mode_idx, base_idx, n_modes):
-    """ """
+    """ desc. """
     # basis tensor has shape : (d, K2, K3)
     if n_modes == 2:
         if primary_mode_idx == 0:   # (:, :, idx)

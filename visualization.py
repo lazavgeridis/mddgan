@@ -76,8 +76,8 @@ def interpolation_chart(G,
                         proj_code,
                         distances,
                         step,
-                        title,
                         n_directions,
+                        title=None,
                         begin=None,
                         end=None,
                         **kwargs):
@@ -92,7 +92,8 @@ def interpolation_chart(G,
     # create a figure with `directions_per_page` + 1 rows
     rows_num = min(n_directions, basis.shape[1]) + 1
     fig, axs = plt.subplots(nrows=rows_num, **kwargs) # **kwargs are passed to pyplot.figure()
-    fig.suptitle(title)
+    if title is not None:
+        fig.suptitle(title)
 
     # show original image in 1st row
     original_image = semantic_edit(G, layers, gan_type, proj_code, direction, 0).squeeze(0)
@@ -118,41 +119,49 @@ def interpolation_chart(G,
 
 
 def lerp_matrix(G,
+                gan_type,
                 layers,
-                basis_matrix,
+                basis_list,
                 proj_codes,
                 n_samples,
                 magnitudes,
                 step,
-                gan_type,
                 results_dir,
-                title='',
                 max_columns=45,
                 directions_per_page=15):
     """Linear interpolation using the columns of the basis matrix."""
 
-    assert basis_matrix.ndim == 2
-    max_columns = min(max_columns, basis_matrix.shape[1])
+    assert all(basis.ndim == 2 for basis in basis_list)
+    max_columns = min(max_columns, basis_list[0].shape[1])
+
+    if len(basis_list) == 2:
+        method_names = ['MddGAN', 'SeFa']
+        n_samples = 1
+    else:
+        method_names = [None]
 
     # plot `directions_per_page` attribute vectors for each sample
     for begin in range(0, max_columns, directions_per_page):
         end = min(max_columns, begin + directions_per_page)
-        matrix = basis_matrix[:, begin:end]
         charts = []
 
         # create an interpolation chart for each sample
         for sample_id in tqdm(range(n_samples), desc='Sample', leave=False):
           code = proj_codes[sample_id:sample_id + 1]
-          fig = interpolation_chart(G, layers, gan_type, matrix, code,
-                  magnitudes, step, title, end - begin,
-                  begin=begin, end=end, dpi=600, constrained_layout=True)
+          for idx, name in enumerate(method_names):
+              submatrix = basis_list[idx]
+              submatrix = submatrix[:, begin:end]
+              fig = interpolation_chart(G, layers, gan_type, submatrix, code,
+                  magnitudes, step, end - begin, title=name,
+                  begin=begin, end=end, dpi=600,
+                  constrained_layout=True)
 
-          # draw chart and append it to `charts` list
-          charts.append(draw_chart(fig))
+              # draw chart and append it to `charts` list
+              charts.append(draw_chart(fig))
 
-          # conserve memory
-          fig.clf()
-          plt.close(fig)
+              # conserve memory
+              fig.clf()
+              plt.close(fig)
 
         # concat charts into a single grid, save the grid
         out_file = os.path.join(results_dir, f'directions_{begin}_{end}.jpg')
@@ -170,7 +179,6 @@ def lerp_tensor(G,
                 step,
                 gan_type,
                 results_dir,
-                title='',
                 directions_per_page=15,
                 n_secondary_bases=3):
     """Short description"""
@@ -197,8 +205,8 @@ def lerp_tensor(G,
 
                     # create figure 
                     fig = interpolation_chart(G, layers, gan_type, bases, code,
-                            magnitudes, step, title,
-                            directions_num, dpi=600, constrained_layout=True)
+                            magnitudes, step, directions_num, dpi=600,
+                            constrained_layout=True)
 
                     # draw chart and append it to `charts` list
                     charts.append(draw_chart(fig))
