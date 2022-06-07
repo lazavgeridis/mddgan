@@ -11,3 +11,6 @@ text can be found [here](https://pergamos.lib.uoa.gr/uoa/dl/object/3059772).
 | sample 1  | ![init_sample1](images/image_0.jpg) |             |             |             |
 | sample 2  |                                     |             |             |             |
 | sample 3  |                                     |             |             |             |
+
+*StyleGAN2 FFHQ*
+![stylegan2_ffhq](images/chart.jpg)
