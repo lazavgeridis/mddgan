@@ -7,4 +7,4 @@ text can be found [here](https://pergamos.lib.uoa.gr/uoa/dl/object/3059772).
 # Results
 
 **StyleGAN2 FFHQ**
-![stylegan2_ffhq](images/chart.jpg)
+![stylegan2_ffhq](images/stylegan2ffhq_chart.jpg)
