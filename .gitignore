@@ -1,2 +1,8 @@
 __pycache__/
 .*.swp
+results/*
+checkpoints/*
+Mdd_first_k_columns/*
+Mdd_Tensorized/*
+results/*
+SeFa_vs_Mdd/*

@@ -4,7 +4,7 @@ import os
 import torch
 import numpy as np
 
-from utils import select_bases
+from utils import select_bases, parse_indices, key_to_title
 from PIL import Image
 from tqdm import tqdm
 from torchvision.utils import make_grid
@@ -219,3 +219,93 @@ def lerp_tensor(G,
                 out_file = os.path.join(mode_dir, f'B[{subscript}].jpg')
                 print('Saving chart to ', out_file)
                 Image.fromarray(np.hstack(charts)).save(out_file) # concatenate figures column-wise
+
+
+def create_attribute_chart(proj_codes,
+                           layers,
+                           generator,
+                           magnitude,
+                           gan_type,
+                           semantic,
+                           attr_name):
+
+    interpolations = []
+    for code_idx in range(proj_codes.shape[0]):
+        interpolations.append(interpolation(generator, layers, gan_type,
+            proj_codes[code_idx:code_idx+1], semantic, [magnitude]))
+
+    assert len(interpolations) == (proj_codes.shape[0])
+
+    fig, axs = plt.subplots(nrows=proj_codes.shape[0], dpi=600, constrained_layout=True)
+    fig.suptitle(key_to_title(attr_name))
+
+    for ax, interp in zip(axs, interpolations):
+      ax.axis('off')
+      ax.imshow(postprocess(interp[0]))
+
+    return fig
+
+
+def create_semantic_chart(G,
+                          gan_type,
+                          proj_codes,
+                          attr_dict,
+                          args,
+                          n_samples_per_page=4):
+
+    total_samples = proj_codes.size()[0]
+    n_pages = int(total_samples / n_samples_per_page)
+
+    for i in range(n_pages):
+        start = i * n_samples_per_page
+        end = min(start + n_samples_per_page, total_samples)
+        codes = proj_codes[start:end]
+
+        charts = []
+        for idx, (key, item) in enumerate(attr_dict.items()):
+
+            print(f'Creating {key} chart...')
+
+            if idx == 0:
+                fig = create_attribute_chart(codes,
+                                             list(range(G.num_layers)),
+                                             G,
+                                             0.0,
+                                             gan_type,
+                                             torch.zeros(G.z_space_dim),
+                                             key)
+
+            else:
+                # load the corresponding semantic 
+                semantic = np.load(f'{args.semantic_dir}/{args.method_name}/{args.model_name}_{key}.npy')
+
+                #
+                layer_idx = item[0]
+                layers = parse_indices(layer_idx, min_val=0, max_val=G.num_layers - 1)
+                magnitude = item[1]
+
+                # create attribute chart
+                fig = create_attribute_chart(codes,
+                                             layers,
+                                             G,
+                                             magnitude,
+                                             gan_type,
+                                             semantic,
+                                             key)
+
+            # draw vertical dotted line
+            if idx != len(attr_dict) - 1:
+                line = plt.Line2D([1.0, 1.0], [0, 1], color="k", linewidth=5, transform=fig.transFigure)
+                fig.add_artist(line)
+
+            # draw chart figure
+            charts.append(draw_chart(fig))
+
+            # conserve memory
+            fig.clf()
+            plt.close(fig)
+
+        # save chart
+        out_file = os.path.join(args.save_dir, f'{args.method_name}_{args.model_name}_{start}_{end}.jpg')
+        print(f'Saving chart to {out_file}\n')
+        Image.fromarray(np.hstack(charts)).save(out_file) # concatenate figures column-wis

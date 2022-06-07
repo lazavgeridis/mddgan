@@ -82,8 +82,7 @@ def load_generator(model_name):
         generator.load_state_dict(checkpoint['generator_smooth'])
     else:
         generator.load_state_dict(checkpoint['generator'])
-    generator = generator.cuda()
-    generator.eval()
+    generator = generator.eval().requires_grad_(False).cuda()
     print(f'Finish loading checkpoint.')
     return generator
 
@@ -339,3 +338,9 @@ def select_bases(basis_tensor, primary_mode_idx, secondary_mode_idx, base_idx, n
         pass
 
     return bases, subscript
+
+
+def key_to_title(attr_key):
+    title = attr_key.split('_')
+    title = ' '.join(word.capitalize() for word in title)
+    return title
