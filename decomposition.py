@@ -76,16 +76,6 @@ def main():
                                         args.num_modes,
                                         args.layer_idx)
 
-    #semantic_idx = int(input(
-    #                '> Enter the index of the semantic you wish to save : '))
-    #attribute_name = input('> Enter a label describing the semantic '
-    #        'attribute : ')
-
-    #semantics_dir = f'semantics/{args.method_name}'
-    #os.makedirs(semantics_dir, exist_ok=True)
-    #np.save(os.path.join(semantics_dir, f'{args.model_name}_{attribute_name}.npy'), basis[:, semantic_idx])
-
-
     # Set random seed.
     np.random.seed(args.seed)
     torch.manual_seed(args.seed)

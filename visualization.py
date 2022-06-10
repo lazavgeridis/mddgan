@@ -169,6 +169,57 @@ def lerp_matrix(G,
         Image.fromarray(np.hstack(charts)).save(out_file) # concatenate figures column-wise
 
 
+#def lerp_tensor(G, 
+#                layers,
+#                basis,
+#                basis_dims,
+#                proj_codes,
+#                n_samples,
+#                magnitudes,
+#                step,
+#                gan_type,
+#                results_dir,
+#                directions_per_page=15,
+#                n_secondary_bases=3):
+#    """Short description"""
+#
+#    # tensorize basis matrix, if needed
+#    if basis.ndim == 2:
+#        basis = basis.reshape(basis.shape[0], *basis_dims)
+#
+#    for primary_mode_idx, primary_mode_dim in enumerate(basis_dims):
+#        mode_dir = os.path.join(results_dir, f'Mode_{primary_mode_idx + 1}')
+#        os.makedirs(mode_dir, exist_ok=True)
+#        for secondary_mode_idx, secondary_mode_dim in enumerate(basis_dims):
+#            if primary_mode_idx == secondary_mode_idx:
+#                continue
+#            for base_idx in range(min(n_secondary_bases, secondary_mode_dim)):
+#
+#        #for secondary_base_idx in range(n_secondary_bases):
+#                charts = []
+#                for sample_id in range(n_samples):
+#                    code = proj_codes[sample_id:sample_id + 1]
+#                    #bases, subscript = select_bases(basis, primary_mode_idx, secondary_base_idx, len(basis_dims))
+#                    bases, subscript = select_bases(basis, primary_mode_idx, secondary_mode_idx, base_idx, len(basis_dims))
+#                    directions_num = min(directions_per_page, bases.shape[1])
+#
+#                    # create figure 
+#                    fig = interpolation_chart(G, layers, gan_type, bases, code,
+#                            magnitudes, step, directions_num, dpi=600,
+#                            constrained_layout=True)
+#
+#                    # draw chart and append it to `charts` list
+#                    charts.append(draw_chart(fig))
+#
+#                    # conserve memory
+#                    fig.clf()
+#                    plt.close(fig)
+#
+#                # concat charts into a single grid, save the grid
+#                out_file = os.path.join(mode_dir, f'B[{subscript}].jpg')
+#                print('Saving chart to ', out_file)
+#                Image.fromarray(np.hstack(charts)).save(out_file) # concatenate figures column-wise
+
 def lerp_tensor(G, 
                 layers,
                 basis,
@@ -190,18 +241,20 @@ def lerp_tensor(G,
     for primary_mode_idx, primary_mode_dim in enumerate(basis_dims):
         mode_dir = os.path.join(results_dir, f'Mode_{primary_mode_idx + 1}')
         os.makedirs(mode_dir, exist_ok=True)
-        for secondary_mode_idx, secondary_mode_dim in enumerate(basis_dims):
-            if primary_mode_idx == secondary_mode_idx:
-                continue
-            for base_idx in range(min(n_secondary_bases, secondary_mode_dim)):
+        #for secondary_mode_idx, secondary_mode_dim in enumerate(basis_dims):
+        #    if primary_mode_idx == secondary_mode_idx:
+        #        continue
+        #    for base_idx in range(min(n_secondary_bases, secondary_mode_dim)):
 
         #for secondary_base_idx in range(n_secondary_bases):
-                charts = []
-                for sample_id in range(n_samples):
-                    code = proj_codes[sample_id:sample_id + 1]
-                    #bases, subscript = select_bases(basis, primary_mode_idx, secondary_base_idx, len(basis_dims))
-                    bases, subscript = select_bases(basis, primary_mode_idx, secondary_mode_idx, base_idx, len(basis_dims))
-                    directions_num = min(directions_per_page, bases.shape[1])
+        charts = []
+        for sample_id in range(n_samples):
+            code = proj_codes[sample_id:sample_id + 1]
+            if primary_mode_idx == 0:
+                bases = basis.reshape(basis.shape[0], primary_mode_dim, -1)
+            elif primary_mode_idx == 1:
+                bases = basis.reshape(basis.shape[0], -1, primary_mode_dim)
+            directions_num = min(directions_per_page, bases.shape[1])
 
                     # create figure 
                     fig = interpolation_chart(G, layers, gan_type, bases, code,
@@ -219,7 +272,6 @@ def lerp_tensor(G,
                 out_file = os.path.join(mode_dir, f'B[{subscript}].jpg')
                 print('Saving chart to ', out_file)
                 Image.fromarray(np.hstack(charts)).save(out_file) # concatenate figures column-wise
-
 
 def create_attribute_chart(proj_codes,
                            layers,

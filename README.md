@@ -4,6 +4,7 @@ This repo contains the implementation of my Bsc Thesis titled
 **"MddGAN : Multilinear Analysis of the GAN Latent Space"**. The thesis
 text can be found [here](https://pergamos.lib.uoa.gr/uoa/dl/object/3059772).
 
+
 # Results
 
 **StyleGAN2 FFHQ**
@@ -14,3 +15,9 @@ text can be found [here](https://pergamos.lib.uoa.gr/uoa/dl/object/3059772).
 **StyleGAN AnimeFaces**
 
 ![stylegan_animeface](images/stylegananime_chart.jpg)
+
+
+# Evaluation
+
+
+**Mention that the ./models directory is copied from sefa + usage of interfacegan directions**
