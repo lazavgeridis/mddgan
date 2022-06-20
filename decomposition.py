@@ -92,7 +92,7 @@ def main():
     codes = codes.detach().cpu()
 
     # Visualization : linear interpolation in the GAN latent space.
-    distances = np.linspace(args.start_distance,args.end_distance, args.step)
+    distances = np.linspace(args.start_distance, args.end_distance, args.step)
 
     vis_id = int(input('\n> Choose one of the visualization options below:\n'
         '1. Linear interpolation using the first K directions (columns) discovered\n'

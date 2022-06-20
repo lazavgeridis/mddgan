@@ -4,7 +4,7 @@ import os
 import torch
 import numpy as np
 
-from utils import select_bases, parse_indices, key_to_title
+from utils import select_bases, semantic_edit, parse_indices, key_to_title
 from PIL import Image
 from tqdm import tqdm
 from torchvision.utils import make_grid
@@ -45,17 +45,17 @@ def draw_chart(fig):
     return chart
 
 
-def semantic_edit(G, layers, gan_type, proj_code, direction, magnitude):
-    """Produces an edited image : I' = G(z + εn)"""
-
-    if gan_type == 'pggan':
-        proj_code += direction * magnitude
-        image = G(proj_code.cuda())['image'].detach().cpu()
-    elif gan_type in ['stylegan', 'stylegan2']:
-        proj_code[:, layers, :] += direction * magnitude
-        image = G.synthesis(proj_code.cuda())['image'].detach().cpu()
-
-    return image
+#def semantic_edit(G, layers, gan_type, proj_code, direction, magnitude):
+#    """Produces an edited image : I' = G(z + εn)"""
+#
+#    if gan_type == 'pggan':
+#        proj_code += direction * magnitude
+#        image = G(proj_code.cuda())['image'].detach().cpu()
+#    elif gan_type in ['stylegan', 'stylegan2']:
+#        proj_code[:, layers, :] += direction * magnitude
+#        image = G.synthesis(proj_code.cuda())['image'].detach().cpu()
+#
+#    return image
 
 
 def interpolation(G, layers, gan_type, proj_code, direction, distances):
@@ -169,57 +169,6 @@ def lerp_matrix(G,
         Image.fromarray(np.hstack(charts)).save(out_file) # concatenate figures column-wise
 
 
-#def lerp_tensor(G, 
-#                layers,
-#                basis,
-#                basis_dims,
-#                proj_codes,
-#                n_samples,
-#                magnitudes,
-#                step,
-#                gan_type,
-#                results_dir,
-#                directions_per_page=15,
-#                n_secondary_bases=3):
-#    """Short description"""
-#
-#    # tensorize basis matrix, if needed
-#    if basis.ndim == 2:
-#        basis = basis.reshape(basis.shape[0], *basis_dims)
-#
-#    for primary_mode_idx, primary_mode_dim in enumerate(basis_dims):
-#        mode_dir = os.path.join(results_dir, f'Mode_{primary_mode_idx + 1}')
-#        os.makedirs(mode_dir, exist_ok=True)
-#        for secondary_mode_idx, secondary_mode_dim in enumerate(basis_dims):
-#            if primary_mode_idx == secondary_mode_idx:
-#                continue
-#            for base_idx in range(min(n_secondary_bases, secondary_mode_dim)):
-#
-#        #for secondary_base_idx in range(n_secondary_bases):
-#                charts = []
-#                for sample_id in range(n_samples):
-#                    code = proj_codes[sample_id:sample_id + 1]
-#                    #bases, subscript = select_bases(basis, primary_mode_idx, secondary_base_idx, len(basis_dims))
-#                    bases, subscript = select_bases(basis, primary_mode_idx, secondary_mode_idx, base_idx, len(basis_dims))
-#                    directions_num = min(directions_per_page, bases.shape[1])
-#
-#                    # create figure 
-#                    fig = interpolation_chart(G, layers, gan_type, bases, code,
-#                            magnitudes, step, directions_num, dpi=600,
-#                            constrained_layout=True)
-#
-#                    # draw chart and append it to `charts` list
-#                    charts.append(draw_chart(fig))
-#
-#                    # conserve memory
-#                    fig.clf()
-#                    plt.close(fig)
-#
-#                # concat charts into a single grid, save the grid
-#                out_file = os.path.join(mode_dir, f'B[{subscript}].jpg')
-#                print('Saving chart to ', out_file)
-#                Image.fromarray(np.hstack(charts)).save(out_file) # concatenate figures column-wise
-
 def lerp_tensor(G, 
                 layers,
                 basis,
@@ -241,20 +190,18 @@ def lerp_tensor(G,
     for primary_mode_idx, primary_mode_dim in enumerate(basis_dims):
         mode_dir = os.path.join(results_dir, f'Mode_{primary_mode_idx + 1}')
         os.makedirs(mode_dir, exist_ok=True)
-        #for secondary_mode_idx, secondary_mode_dim in enumerate(basis_dims):
-        #    if primary_mode_idx == secondary_mode_idx:
-        #        continue
-        #    for base_idx in range(min(n_secondary_bases, secondary_mode_dim)):
+        for secondary_mode_idx, secondary_mode_dim in enumerate(basis_dims):
+            if primary_mode_idx == secondary_mode_idx:
+                continue
+            for base_idx in range(min(n_secondary_bases, secondary_mode_dim)):
 
         #for secondary_base_idx in range(n_secondary_bases):
-        charts = []
-        for sample_id in range(n_samples):
-            code = proj_codes[sample_id:sample_id + 1]
-            if primary_mode_idx == 0:
-                bases = basis.reshape(basis.shape[0], primary_mode_dim, -1)
-            elif primary_mode_idx == 1:
-                bases = basis.reshape(basis.shape[0], -1, primary_mode_dim)
-            directions_num = min(directions_per_page, bases.shape[1])
+                charts = []
+                for sample_id in range(n_samples):
+                    code = proj_codes[sample_id:sample_id + 1]
+                    #bases, subscript = select_bases(basis, primary_mode_idx, secondary_base_idx, len(basis_dims))
+                    bases, subscript = select_bases(basis, primary_mode_idx, secondary_mode_idx, base_idx, len(basis_dims))
+                    directions_num = min(directions_per_page, bases.shape[1])
 
                     # create figure 
                     fig = interpolation_chart(G, layers, gan_type, bases, code,
@@ -272,6 +219,7 @@ def lerp_tensor(G,
                 out_file = os.path.join(mode_dir, f'B[{subscript}].jpg')
                 print('Saving chart to ', out_file)
                 Image.fromarray(np.hstack(charts)).save(out_file) # concatenate figures column-wise
+
 
 def create_attribute_chart(proj_codes,
                            layers,
@@ -361,3 +309,63 @@ def create_semantic_chart(G,
         out_file = os.path.join(args.save_dir, f'{args.method_name}_{args.model_name}_{start}_{end}.jpg')
         print(f'Saving chart to {out_file}\n')
         Image.fromarray(np.hstack(charts)).save(out_file) # concatenate figures column-wis
+
+
+def create_comparison_chart(G,
+                            gan_type,
+                            trunc_psi,
+                            trunc_layers,
+                            semantics,
+                            layers,
+                            magnitudes,
+                            step,
+                            text,
+                            reverse=False):
+    """ 
+    top row corresponds to the effect produced by the competing method
+    bottom row corresponds to the effect produced by MddGAN
+    """
+    fig, axs = plt.subplots(nrows=2, dpi=600, constrained_layout=True)
+
+    latent_vector = torch.randn(1, G.z_space_dim, device='cuda')
+    if gan_type == 'pggan':
+        code = G.layer0.pixel_norm(latent_vector)
+    elif gan_type == 'stylegan' or gan_type == 'stylegan2':
+        code = G.mapping(latent_vector)['w']
+        code = G.truncation(code, trunc_psi=trunc_psi, trunc_layers=trunc_layers)
+
+    for i in range(2):
+        axs[i].axis('off')
+        axs[i].imshow(
+                postprocess(
+                    make_grid(
+                        interpolation(G,
+                            layers[i],
+                            gan_type,
+                            code,
+                            semantics[i],
+                            magnitudes[::-1] if i == 1 and reverse else magnitudes),
+                            nrow=step)
+                    )
+                )
+        axs[i].text(0, 0.5,
+                text[i],
+                horizontalalignment='right',
+                verticalalignment='center',
+                rotation='vertical',
+                fontsize='small',
+                fontweight='bold' if text[i] == 'Ours' else 'regular',
+                transform=axs[i].transAxes)
+
+    plt.show()
+
+
+def fid_plot(title, x_axis, competing_fid, mddgan_fid, competing_name):
+    fig, ax = plt.subplots()
+    fig.suptitle(title)
+    ax.set_xlabel('Magnitude')
+    ax.set_ylabel('FID')
+    ax.plot(x_axis, competing_fid, label=competing_name)
+    ax.plot(x_axis, mddgan_fid, label='mddgan')
+    ax.legend()
+    fig.savefig('fid.png')

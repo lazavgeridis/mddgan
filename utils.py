@@ -1,25 +1,28 @@
 """Utility functions."""
 
-import base64
 import os
 import copy
 import subprocess
 import cv2
 import scipy
+import torch
 import numpy as np
+from tqdm import tqdm
+from math import ceil
 from tensorly.tenalg import khatri_rao
 from tensorly.base import unfold
 from sklearn.utils.extmath import randomized_svd
 
-import torch
-
 from models import MODEL_ZOO
 from models import build_generator
 from models import parse_gan_type
+#from visualization import semantic_edit
+from evaluate import get_inception_output
 
-__all__ = ['postprocess', 'load_generator', 'decompose_weights']
+#__all__ = ['postprocess', 'load_generator', 'decompose_weights']
 
 CHECKPOINT_DIR = 'checkpoints'
+#CHECKPOINT_DIR = '/content/gdrive/My Drive/Discovering_Modes_of_Variation/checkpoints'
 
 DIRECTIONS_DICT = {512 : {1 : [512], 2 : [32, 16], 3 : [8, 8, 8],  # 3 : [8, 8, 8], 3 : [16, 8, 4], 3 : [16, 16, 2], 3 : [32, 4, 4]
                           4 : [4, 4, 4, 8], 5 : [4, 4, 4, 4, 2], 6 : [4, 4, 4, 2, 2, 2], 
@@ -344,3 +347,73 @@ def key_to_title(attr_key):
     title = attr_key.split('_')
     title = ' '.join(word.capitalize() for word in title)
     return title
+
+
+def get_fake_activations(G,
+                        inception,
+                        semantics,
+                        layers,
+                        gan_type,
+                        magnitude,
+                        fid_size,
+                        trunc_psi,
+                        trunc_layers,
+                        batch_size=8,
+                        reverse=False):
+    """
+    semantics = [mddgan_semantic, other_semantic]
+    layers = [mddgan_list, other_list]
+    """
+
+    mddgan_inception_activations    = []
+    competing_inception_activations = []
+    print("Getting fake activations...\n")
+
+    for batch in tqdm(range(ceil(fid_size / batch_size))):
+
+        # generate batch of fake images
+        z_vectors = torch.randn(batch_size, G.z_space_dim, device='cuda')
+
+        # 
+        if gan_type == 'pggan':
+            codes = G.layer0.pixel_norm(z_vectors)
+        elif gan_type == 'stylegan' or gan_type == 'stylegan2':
+            codes = G.mapping(z_vectors)['w']
+            codes = G.truncation(codes, trunc_psi=trunc_psi, trunc_layers=trunc_layers)
+        
+        # edit using the selected attribute vector (`semantic`) and magnitude
+        competing_edited_images = semantic_edit(G,
+                                                layers[0],
+                                                gan_type,
+                                                codes,
+                                                semantics[0],
+                                                magnitude)
+        mddgan_edited_images = semantic_edit(G,
+                                            layers[1],
+                                            gan_type,
+                                            codes,
+                                            semantics[1],
+                                            -1.0 * magnitude if reverse else magnitude)
+
+        # get inception network output for edited images
+        competing_inception_activations.append(get_inception_output(inception, competing_edited_images.cuda()))
+        mddgan_inception_activations.append(get_inception_output(inception, mddgan_edited_images.cuda()))
+
+    competing_fake_activations = np.concatenate(competing_inception_activations, axis=0)[:fid_size, :]
+    mddgan_fake_activations = np.concatenate(mddgan_inception_activations, axis=0)[:fid_size, :]
+    assert mddgan_fake_activations.ndim == 2 and mddgan_fake_activations.shape[0] == fid_size
+
+    return competing_fake_activations, mddgan_fake_activations
+
+
+def semantic_edit(G, layers, gan_type, proj_code, direction, magnitude):
+    """Produces an edited image : I' = G(z + εn)"""
+ 
+    if gan_type == 'pggan':
+        proj_code += direction * magnitude
+        image = G(proj_code.cuda())['image'].detach().cpu()
+    elif gan_type in ['stylegan', 'stylegan2']:
+        proj_code[:, layers, :] += direction * magnitude
+        image = G.synthesis(proj_code.cuda())['image'].detach().cpu()
+
+    return image
