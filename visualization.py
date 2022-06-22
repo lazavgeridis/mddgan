@@ -80,6 +80,7 @@ def interpolation_chart(G,
                         title=None,
                         begin=None,
                         end=None,
+                        original=True,
                         **kwargs):
     '''Create a pyplot figure with `directions_per_page` interpolation grids centered around `proj_code` vector'''
 
@@ -90,22 +91,23 @@ def interpolation_chart(G,
         rowgrids_per_page.append(interpolation(G, layers, gan_type, proj_code, direction, distances)) # create interpolation grid for direction `direction`
 
     # create a figure with `directions_per_page` + 1 rows
-    rows_num = min(n_directions, basis.shape[1]) + 1
+    rows_num = min(n_directions, basis.shape[1]) + int(original)
     fig, axs = plt.subplots(nrows=rows_num, **kwargs) # **kwargs are passed to pyplot.figure()
     if title is not None:
         fig.suptitle(title)
 
     # show original image in 1st row
-    original_image = semantic_edit(G, layers, gan_type, proj_code, direction, 0).squeeze(0)
-    axs[0].axis('off')
-    axs[0].imshow(postprocess(original_image))
+    if original:
+        original_image = semantic_edit(G, layers, gan_type, proj_code, direction, 0).squeeze(0)
+        axs[0].axis('off')
+        axs[0].imshow(postprocess(original_image))
 
     # plot each interpolation grid on the corresponing row
     if begin is not None and end is not None:
         desc = range(begin, end)
     else:
         desc = range(n_directions)
-    for ax, direction_interp, text in zip(axs[1:], rowgrids_per_page, desc):
+    for ax, direction_interp, text in zip(axs[int(original):], rowgrids_per_page, desc):
         ax.axis('off')
         #plt.subplots_adjust(left=0.25)  # setting left=0.2 or lower eliminates whitespace between charts
         ax.imshow(postprocess(make_grid(direction_interp, nrow=step)))
