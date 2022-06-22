@@ -85,7 +85,7 @@ def load_generator(model_name):
         generator.load_state_dict(checkpoint['generator_smooth'])
     else:
         generator.load_state_dict(checkpoint['generator'])
-    generator = generator.eval().requires_grad_(False).cuda()
+    generator = generator.eval().requires_grad_(False)
     print(f'Finish loading checkpoint.')
     return generator
 

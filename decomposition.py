@@ -68,7 +68,7 @@ def main():
     #os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu_id
 
     # Factorize weights.
-    generator = load_generator(args.model_name)
+    generator = load_generator(args.model_name).cuda()
     gan_type = parse_gan_type(generator)
     layers, basis, dims = analyze_latent_space('mddgan' if args.method_name == 'both' else args.method_name,
                                         generator,
@@ -81,7 +81,7 @@ def main():
     torch.manual_seed(args.seed)
 
     # Prepare latent codes.
-    codes = torch.randn(args.num_samples, generator.z_space_dim).cuda()
+    codes = torch.randn(args.num_samples, generator.z_space_dim, device='cuda')
     if gan_type == 'pggan':
         codes = generator.layer0.pixel_norm(codes)
     elif gan_type in ['stylegan', 'stylegan2']:

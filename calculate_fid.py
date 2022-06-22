@@ -64,7 +64,7 @@ def main():
     args = parse_args()
 
     # Load Generator and Inception networks.
-    generator = load_generator(args.model_name)
+    generator = load_generator(args.model_name).cuda()
     gan_type = parse_gan_type(generator)
     inception_model = InceptionV3().eval().requires_grad_(False).cuda()
 

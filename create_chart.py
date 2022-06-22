@@ -53,7 +53,7 @@ def main():
     args = parse_args()
 
     # Load pre-trained Generator.
-    generator = load_generator(args.model_name)
+    generator = load_generator(args.model_name).cuda()
     gan_type = parse_gan_type(generator)
 
     # Set random seed.
