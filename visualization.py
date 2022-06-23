@@ -349,7 +349,7 @@ def create_comparison_chart(G,
                                 gan_type,
                                 codes[i:i+1],
                                 semantics[method_idx],
-                                magnitudes[::-1] if i == 1 and reverse else magnitudes),
+                                magnitudes[::-1] if method_idx == 1 and reverse else magnitudes),
                                 nrow=step)
                         )
                     )
