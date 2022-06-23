@@ -340,27 +340,27 @@ def create_comparison_chart(G,
     for i in range(n_samples):
         for method_idx in range(2):
             ax_idx = i * n_samples + method_idx
-            axs[i].axis('off')
-            axs[i].imshow(
+            axs[ax_idx].axis('off')
+            axs[ax_idx].imshow(
                     postprocess(
                         make_grid(
                             interpolation(G,
-                                layers[i],
+                                layers[method_idx],
                                 gan_type,
                                 codes[i:i+1],
-                                semantics[i],
+                                semantics[method_idx],
                                 magnitudes[::-1] if i == 1 and reverse else magnitudes),
                                 nrow=step)
                         )
                     )
-            axs[i].text(0, 0.5,
-                    text[i],
+            axs[ax_idx].text(0, 0.5,
+                    text[method_idx],
                     horizontalalignment='right',
                     verticalalignment='center',
                     rotation='vertical',
                     fontsize='small',
-                    fontweight='bold' if text[i] == 'Ours' else 'regular',
-                    transform=axs[i].transAxes)
+                    fontweight='bold' if text[method_idx] == 'Ours' else 'regular',
+                    transform=axs[ax_idx].transAxes)
 
     # draw horizontal line
     if n_samples > 1:
