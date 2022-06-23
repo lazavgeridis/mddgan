@@ -347,7 +347,7 @@ def create_comparison_chart(G,
                             interpolation(G,
                                 layers[i],
                                 gan_type,
-                                code,
+                                codes[i:i+1],
                                 semantics[i],
                                 magnitudes[::-1] if i == 1 and reverse else magnitudes),
                                 nrow=step)
