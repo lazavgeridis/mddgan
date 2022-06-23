@@ -41,4 +41,13 @@ ATTRIBUTES = {
              'pose':('0-3', 0.0),
              'smile':('2-3', 0.0)
             }
+
+        'stylegan_ffhq1024':
+            {'age':('2,4,5,6', 0.0),
+            'eyeglasses':('0-17', 0.0),
+            'gender':('2-3', 0.0),
+            'pose':('0-6', 0.0),
+            'pose_inverted':('0-3', 0.0),
+            'smile':('3', 0.0)
+            }
 }

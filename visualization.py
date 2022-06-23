@@ -322,42 +322,50 @@ def create_comparison_chart(G,
                             magnitudes,
                             step,
                             text,
-                            reverse=False):
+                            reverse=False,
+                            n_samples=2):
     """ 
     top row corresponds to the effect produced by the competing method
     bottom row corresponds to the effect produced by MddGAN
     """
-    fig, axs = plt.subplots(nrows=2, dpi=600, constrained_layout=True)
+    fig, axs = plt.subplots(nrows=2*n_samples, dpi=600, constrained_layout=True)
 
-    latent_vector = torch.randn(1, G.z_space_dim, device='cuda')
+    latent_vectors = torch.randn(n_samples, G.z_space_dim, device='cuda')
     if gan_type == 'pggan':
-        code = G.layer0.pixel_norm(latent_vector)
+        codes = G.layer0.pixel_norm(latent_vectors)
     elif gan_type == 'stylegan' or gan_type == 'stylegan2':
-        code = G.mapping(latent_vector)['w']
-        code = G.truncation(code, trunc_psi=trunc_psi, trunc_layers=trunc_layers)
+        codes = G.mapping(latent_vectors)['w']
+        codes = G.truncation(codes, trunc_psi=trunc_psi, trunc_layers=trunc_layers)
 
-    for i in range(2):
-        axs[i].axis('off')
-        axs[i].imshow(
-                postprocess(
-                    make_grid(
-                        interpolation(G,
-                            layers[i],
-                            gan_type,
-                            code,
-                            semantics[i],
-                            magnitudes[::-1] if i == 1 and reverse else magnitudes),
-                            nrow=step)
+    for i in range(n_samples):
+        for method_idx in range(2):
+            ax_idx = i * n_samples + method_idx
+            axs[i].axis('off')
+            axs[i].imshow(
+                    postprocess(
+                        make_grid(
+                            interpolation(G,
+                                layers[i],
+                                gan_type,
+                                code,
+                                semantics[i],
+                                magnitudes[::-1] if i == 1 and reverse else magnitudes),
+                                nrow=step)
+                        )
                     )
-                )
-        axs[i].text(0, 0.5,
-                text[i],
-                horizontalalignment='right',
-                verticalalignment='center',
-                rotation='vertical',
-                fontsize='small',
-                fontweight='bold' if text[i] == 'Ours' else 'regular',
-                transform=axs[i].transAxes)
+            axs[i].text(0, 0.5,
+                    text[i],
+                    horizontalalignment='right',
+                    verticalalignment='center',
+                    rotation='vertical',
+                    fontsize='small',
+                    fontweight='bold' if text[i] == 'Ours' else 'regular',
+                    transform=axs[i].transAxes)
+
+    # draw horizontal line
+    if n_samples > 1:
+        line = plt.Line2D([0.1, 0.9], [0.5, 0.5], color="k", linewidth=1)
+        fig.add_artist(line)
 
     plt.show()
 
