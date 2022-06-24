@@ -97,7 +97,7 @@ def interpolation_chart(G,
         fig.suptitle(title)
 
     # show original image in 1st row
-    if original:
+    if show_original:
         original_image = semantic_edit(G, layers, gan_type, proj_code, direction, 0).squeeze(0)
         axs[0].axis('off')
         axs[0].imshow(postprocess(original_image))
