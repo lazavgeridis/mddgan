@@ -39,7 +39,10 @@ ATTRIBUTES = {
              'eyeglasses':('0-5', 0.0),
              'gender':('0-1', 0.0),
              'pose':('0-3', 0.0),
-             'smile':('2-3', 0.0)
+             'smile':('2-3', 0.0),
+             'face_shape_1':('2', 0.0),
+             'zoom':('0-3', 0.0),
+             'hair':('1-3', 0.0)
             },
 
         'stylegan_ffhq1024':
@@ -48,6 +51,9 @@ ATTRIBUTES = {
             'gender':('2-3', 0.0),
             'pose':('0-6', 0.0),
             'pose_inverted':('0-3', 0.0),
-            'smile':('3', 0.0)
+            'smile':('3', 0.0),
+            'race1':('7-12', 0.0),
+            'race2':('5-7', 0.0),
+            'lighting':('5-8', 0.0)
             }
 }

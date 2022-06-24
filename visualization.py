@@ -358,7 +358,7 @@ def create_comparison_chart(G,
                     horizontalalignment='right',
                     verticalalignment='center',
                     rotation='vertical',
-                    fontsize='small',
+                    fontsize='medium',
                     fontweight='bold' if text[method_idx] == 'Ours' else 'regular',
                     transform=axs[ax_idx].transAxes)
 
