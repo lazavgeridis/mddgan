@@ -1,4 +1,7 @@
-""" Desc. """
+"""
+Functions used in various visualization operations, demonstrating
+the edits produced by the discovered semantics.
+"""
 
 import os
 import torch
@@ -32,7 +35,7 @@ def postprocess(images, min_val=-1.0, max_val=1.0):
 
 
 def draw_chart(fig):
-    """Draws a chart figure"""
+    """Draws a chart figure."""
 
     fig.canvas.draw()
     chart = np.frombuffer(fig.canvas.tostring_rgb(), dtype=np.uint8)
@@ -43,19 +46,6 @@ def draw_chart(fig):
     chart = chart.transpose(1, 0, 2)[nonzero_columns].transpose(1, 0, 2)
 
     return chart
-
-
-#def semantic_edit(G, layers, gan_type, proj_code, direction, magnitude):
-#    """Produces an edited image : I' = G(z + εn)"""
-#
-#    if gan_type == 'pggan':
-#        proj_code += direction * magnitude
-#        image = G(proj_code.cuda())['image'].detach().cpu()
-#    elif gan_type in ['stylegan', 'stylegan2']:
-#        proj_code[:, layers, :] += direction * magnitude
-#        image = G.synthesis(proj_code.cuda())['image'].detach().cpu()
-#
-#    return image
 
 
 def interpolation(G, layers, gan_type, proj_code, direction, distances):

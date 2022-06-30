@@ -3,7 +3,6 @@
 import os
 import copy
 import subprocess
-import cv2
 import scipy
 import torch
 import numpy as np
@@ -15,11 +14,8 @@ from sklearn.utils.extmath import randomized_svd
 
 from models import MODEL_ZOO
 from models import build_generator
-from models import parse_gan_type
-#from visualization import semantic_edit
 from evaluate import get_inception_output
 
-#__all__ = ['postprocess', 'load_generator', 'decompose_weights']
 
 CHECKPOINT_DIR = 'checkpoints'
 #CHECKPOINT_DIR = '/content/gdrive/My Drive/Discovering_Modes_of_Variation/checkpoints'
@@ -33,19 +29,6 @@ DIRECTIONS_DICT = {512 : {1 : [512], 2 : [32, 16], 3 : [8, 8, 8],  # 3 : [8, 8, 
                    12  : {1 : [12],  2 : [3, 4],   3 : [2, 2, 3], 4 : [1, 1, 1, 12]},
                    8   : {3 : [2, 2, 2], 4 : [2, 2, 2, 1]}
                   }
-
-
-def to_tensor(array):
-    """Converts a `numpy.ndarray` to `torch.Tensor`.
-
-    Args:
-      array: The input array to convert.
-
-    Returns:
-      A `torch.Tensor` with dtype `torch.FloatTensor` on cuda device.
-    """
-    assert isinstance(array, np.ndarray)
-    return torch.from_numpy(array).type(torch.FloatTensor).cuda()
 
 
 def load_generator(model_name):
@@ -144,23 +127,24 @@ def parse_indices(obj, min_val=None, max_val=None):
 
 
 def svd(X):
-    '''singular value decomposition'''
+    """singular value decomposition."""
     U, s, V_T = scipy.linalg.svd(X)
 
     return U, scipy.linalg.diagsvd(s, X.shape[0], X.shape[1]), V_T
 
 
 def truncated_svd(X, t):
-    '''truncated svd'''
+    """truncated svd."""
     U, s, V_T = randomized_svd(X, n_components=t, random_state=0)
 
     return U, scipy.linalg.diagsvd(s, t, t), V_T
 
 
 def hosvd(Q):
-    '''calculate the best rank-1 approximation of
-    tensor Q using truncated HOSVD
-    '''
+    """
+    calculate the best rank-1 approximation of
+    tensor Q using truncated HOSVD.
+    """
     U = []
     S = Q
     for dim in range(Q.ndim):
@@ -173,6 +157,12 @@ def hosvd(Q):
 
 
 def tensorize(array, dims, reverse=True):
+    """
+    rearrange the elements of a vector or a matrix
+    into a tensor.
+    e.g if vector q has dimension d and d = K_2 * K_3 * ... * K_M,
+        convert q to tensor Q of shape (K_2, K_3, ..., K_M).
+    """
     if reverse:
         return array.reshape(*reversed(dims))
     else:
@@ -180,17 +170,18 @@ def tensorize(array, dims, reverse=True):
 
 
 def mdd(X, K, n_directions, n_iter=5):
-    """Decomposes the input matrix X into
-     a basis matrix B_(1) and variation
-     coefficients A^(2), A^(3), ..., A^(M)
+    """
+    Decomposes the input matrix X into
+    a basis matrix B_(1) and variation
+    coefficients A^(2), A^(3), ..., A^(M)
 
-     Parameters
-     ----------
-     X : numpy.ndarray
-         data matrix of shape (d, N)
-     K : list
-         contains the values K_m, where
-         m in [2, M].
+    Parameters
+    ----------
+    X : numpy.ndarray
+        data matrix of shape (d, N)
+    K : list
+        contains the values K_m, where
+        m in [2, M]
     """
     assert np.prod(K) == n_directions
 
@@ -245,28 +236,16 @@ def mdd(X, K, n_directions, n_iter=5):
     return best_B, best_variation_modes
 
 
-def analyze_latent_space(method, generator, n_components, n_modes, layer_idx='all'):
-    """Factorizes the generator weight to get semantics boundaries.
-
-    Args:
-        generator: Generator to factorize.
-        layer_idx: Indices of layers to interpret, especially for StyleGAN and
-            StyleGAN2. (default: `all`)
-
-    Returns:
-        A tuple of (layers_to_interpret, semantic_boundaries, eigen_values).
-
-    Raises:
-        ValueError: If the generator type is not supported.
+def analyze_latent_space(method, generator, gan_type, n_components, n_modes, layer_range='all'):
     """
-    # Get GAN type.
-    gan_type = parse_gan_type(generator)
-
+    Analyze the weight of the pre-trained GAN model and extract meaningful
+    semantics.
+    """
     # Get layers.
     if gan_type == 'pggan':
         layers = [0]
     elif gan_type in ['stylegan', 'stylegan2']:
-        if layer_idx == 'all':
+        if layer_range == 'all':
             layers = list(range(generator.num_layers))
         else:
             layers = parse_indices(layer_idx,
@@ -343,10 +322,17 @@ def select_bases(basis_tensor, primary_mode_idx, secondary_mode_idx, base_idx, n
     return bases, subscript
 
 
-def key_to_title(attr_key):
-    title = attr_key.split('_')
-    title = ' '.join(word.capitalize() for word in title)
-    return title
+def semantic_edit(G, layers, gan_type, proj_code, direction, magnitude):
+    """Produces an edited image : I' = G(z + εn)."""
+ 
+    if gan_type == 'pggan':
+        proj_code += direction * magnitude
+        image = G(proj_code.cuda())['image'].detach().cpu()
+    elif gan_type in ['stylegan', 'stylegan2']:
+        proj_code[:, layers, :] += direction * magnitude
+        image = G.synthesis(proj_code.cuda())['image'].detach().cpu()
+
+    return image
 
 
 def get_fake_activations(G,
@@ -361,8 +347,10 @@ def get_fake_activations(G,
                         batch_size=8,
                         reverse=False):
     """
-    semantics = [mddgan_semantic, other_semantic]
-    layers = [mddgan_list, other_list]
+    collect `fid_size` fake activations by semantically editing
+    synthesized images and passing them through the Inception network.
+    Do this for both the MddGAN and competing method (InterFaceGAN/SeFa)
+    semantics.
     """
 
     mddgan_inception_activations    = []
@@ -406,14 +394,7 @@ def get_fake_activations(G,
     return competing_fake_activations, mddgan_fake_activations
 
 
-def semantic_edit(G, layers, gan_type, proj_code, direction, magnitude):
-    """Produces an edited image : I' = G(z + εn)"""
- 
-    if gan_type == 'pggan':
-        proj_code += direction * magnitude
-        image = G(proj_code.cuda())['image'].detach().cpu()
-    elif gan_type in ['stylegan', 'stylegan2']:
-        proj_code[:, layers, :] += direction * magnitude
-        image = G.synthesis(proj_code.cuda())['image'].detach().cpu()
-
-    return image
+def key_to_title(attr_key):
+    title = attr_key.split('_')
+    title = ' '.join(word.capitalize() for word in title)
+    return title

@@ -79,7 +79,12 @@ def main():
                             max_val=generator.num_layers - 1)
 
     reverse = False
-    if args.model_name == 'stylegan_celebahq1024' and args.attribute_name in ['gender', 'age']:
+    cond1 = (args.model_name == 'stylegan_celebahq1024' and args.attribute_name in ['gender', 'age'])
+    cond2 = (args.model_name == 'stylegan_ffhq1024' and
+            args.competing_method_name == 'interfacegan' and args.attribute_name in ['age', 'eyeglasses', 'gender', 'smile'])
+    cond3 = (args.model_name == 'stylegan_ffhq1024' and
+            args.competing_method_name == 'sefa' and args.attribute_name in ['age', 'eyeglasses', 'smile'])
+    if cond1 or cond2 or cond3:
         reverse = True
     if args.competing_method_name == 'interfacegan':
         competing_layers = list(range(generator.num_layers))
@@ -91,16 +96,16 @@ def main():
     #competing_fid = []
     print(f'Calculating FID for magnitude={args.magnitude} ...')
     competing_activ, mddgan_activ = get_fake_activations(   generator,
-                                                                inception_model,
-                                                                [competing_attr_vector, mddgan_attr_vector],
-                                                                [competing_layers, mddgan_layers],
-                                                                gan_type,
-                                                                args.magnitude,
-                                                                args.fid_sample,
-                                                                args.trunc_psi,
-                                                                args.trunc_layers,
-                                                                batch_size=args.batch_size,
-                                                                reverse=reverse     )
+                                                            inception_model,
+                                                            [competing_attr_vector, mddgan_attr_vector],
+                                                            [competing_layers, mddgan_layers],
+                                                            gan_type,
+                                                            args.magnitude,
+                                                            args.fid_sample,
+                                                            args.trunc_psi,
+                                                            args.trunc_layers,
+                                                            batch_size=args.batch_size,
+                                                            reverse=reverse     )
     competing_fid = fid50k(args.dataset_stats, competing_activ)
     mddgan_fid = fid50k(args.dataset_stats, mddgan_activ)
 

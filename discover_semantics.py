@@ -1,5 +1,6 @@
 '''
-File Description
+Analyze the latent space of the selected GAN model using either one of
+MddGAN or SeFa (or compare the 2) . Then explore the extracted semantics.
 '''
 
 import os
@@ -17,27 +18,27 @@ from utils import load_generator, analyze_latent_space
 def parse_args():
     """Parses arguments."""
     parser = argparse.ArgumentParser(
-        description='Discover semantics from the pre-trained weight.')
+        description='Discover and visualize semantics from the pre-trained GAN weights.')
     parser.add_argument('model_name', type=str,
-                        help='Name to the pre-trained model.')
+                        help='Name of the pre-trained GAN model.')
     parser.add_argument('method_name', type=str, choices=['mddgan', 'sefa', 'both'],
                         help='Name of the method to use when analyzing the '
                         'GAN latent space.')
     parser.add_argument('--save_dir', type=str, default='results',
                         help='Directory to save the visualization pages. '
                              '(default: %(default)s)')
-    parser.add_argument('-L', '--layer_idx', type=str, default='all',
+    parser.add_argument('-L', '--layer_range', type=str, default='all',
                         help='Indices of layers to interpret. '
                              '(default: %(default)s)')
     parser.add_argument('-N', '--num_samples', type=int, default=3,
                         help='Number of samples used for visualization. '
                              '(default: %(default)s)')
     parser.add_argument('-C', '--num_components', type=int, default=512,
-                        help='Number of semantic boundaries. '
-                            '(default: %(default)s)')
+                        help='Number of total directions discovered. Used '
+                                'exclusively for MddGAN. (default: %(default)s)')
     parser.add_argument('-M', '--num_modes', type=int, default=1,
-                        help='Number of modes of variation. '
-                            '(default: %(default)s)')
+                        help='Number of modes of variation the data is assumed '
+                            'to consist of. Used exclusively for MddGAN. (default: %(default)s)')
     parser.add_argument('--start_distance', type=float, default=-5.0,
                         help='Start point for manipulation on each semantic. '
                              '(default: %(default)s)')
@@ -57,24 +58,22 @@ def parse_args():
                              '(default: %(default)s)')
     parser.add_argument('--seed', type=int, default=0,
                         help='Seed for sampling. (default: %(default)s)')
-    #parser.add_argument('--gpu_id', type=str, default='0',
-    #                    help='GPU(s) to use. (default: %(default)s)')
     return parser.parse_args()
 
 
 def main():
     """Main function."""
     args = parse_args()
-    #os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu_id
 
     # Factorize weights.
     generator = load_generator(args.model_name).cuda()
     gan_type = parse_gan_type(generator)
     layers, basis, dims = analyze_latent_space('mddgan' if args.method_name == 'both' else args.method_name,
                                         generator,
+                                        gan_type,
                                         args.num_components,
                                         args.num_modes,
-                                        args.layer_idx)
+                                        args.layer_range)
 
     # Set random seed.
     np.random.seed(args.seed)
@@ -108,8 +107,8 @@ def main():
 
     if vis_id == 1:
         print(basis.shape)
-        lerp_matrix(generator, gan_type, layers, [basis], codes, args.num_samples, distances,
-                args.step, args.save_dir)
+        lerp_matrix(generator, gan_type, layers, [basis], codes, args.num_samples,
+                distances, args.step, args.save_dir)
 
     elif vis_id == 2:
         print(basis.shape)
