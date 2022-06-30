@@ -28,6 +28,7 @@ def parse_args():
                         help='Name of the semantic attribute to use to edit.')
     parser.add_argument('dataset_stats', type=str, help='path to pre-computed dataset mean '
                                             'and covariance')
+    parser.add_argument('magnitude', type=float, help='magnitude of change')
     parser.add_argument('--batch_size', type=int, default=8,
                         help='Mini-batch size when generating fake images.'
                              '(default: %(default)s)')
@@ -36,15 +37,6 @@ def parse_args():
                              '(default: %(default)s)')
     parser.add_argument('-N', '--fid_sample', type=int, default=50000,
                         help='Number of samples to generate for FID calculation. '
-                             '(default: %(default)s)')
-    parser.add_argument('--start_distance', type=float, default=-5.0,
-                        help='Start point for manipulation on each semantic. '
-                             '(default: %(default)s)')
-    parser.add_argument('--end_distance', type=float, default=5.0,
-                        help='Ending point for manipulation on each semantic. '
-                             '(default: %(default)s)')
-    parser.add_argument('--step', type=int, default=7,
-                        help='Manipulation step on each semantic. '
                              '(default: %(default)s)')
     parser.add_argument('--trunc_psi', type=float, default=0.7,
                         help='Psi factor used for truncation. This is '
@@ -87,55 +79,41 @@ def main():
                             max_val=generator.num_layers - 1)
 
     reverse = False
-    text = ['Ours']
     if args.model_name == 'stylegan_celebahq1024' and args.attribute_name in ['gender', 'age']:
         reverse = True
     if args.competing_method_name == 'interfacegan':
         competing_layers = list(range(generator.num_layers))
-        text.insert(0, 'InterFaceGAN')
     elif args.competing_method_name == 'sefa':
         competing_layers = mddgan_layers
-        text.insert(0, 'SeFa')
-
-    # visualize the effect produced by both semantics
-    magnitudes = np.linspace(args.start_distance, args.end_distance, args.step)
-    print(magnitudes)
-    create_comparison_chart(generator,
-                            gan_type,
-                            args.trunc_psi,
-                            args.trunc_layers,
-                            [competing_attr_vector, mddgan_attr_vector],
-                            [competing_layers, mddgan_layers],
-                            magnitudes,
-                            args.step,
-                            text,
-                            reverse=reverse)
 
     # create fid comparison plot
-    mddgan_fid = []
-    competing_fid = []
-    for magnitude in magnitudes:
-        print(f'Calculating FID for magnitude={magnitude} ...')
-        competing_activ, mddgan_activ = get_fake_activations(   generator,
+    #mddgan_fid = []
+    #competing_fid = []
+    print(f'Calculating FID for magnitude={args.magnitude} ...')
+    competing_activ, mddgan_activ = get_fake_activations(   generator,
                                                                 inception_model,
                                                                 [competing_attr_vector, mddgan_attr_vector],
                                                                 [competing_layers, mddgan_layers],
                                                                 gan_type,
-                                                                magnitude,
+                                                                args.magnitude,
                                                                 args.fid_sample,
                                                                 args.trunc_psi,
                                                                 args.trunc_layers,
                                                                 batch_size=args.batch_size,
                                                                 reverse=reverse     )
-        competing_fid.append(fid50k(args.dataset_stats, competing_activ))
-        mddgan_fid.append(fid50k(args.dataset_stats, mddgan_activ))
+    competing_fid = fid50k(args.dataset_stats, competing_activ)
+    mddgan_fid = fid50k(args.dataset_stats, mddgan_activ)
 
-    if args.model_name == 'stylegan_celebahq1024':
-        title = f'StyleGAN CelebaHQ {args.attribute_name.capitalize()}'
-    elif args.model_name == 'stylegan_ffhq1024':
-        title = f'StyleGAN FFHQ {args.attribute_name.capitalize()}'
+    file_name = f'{args.model_name}_{args.competing_method_name}_{args.attribute_name}.txt'
+    with open(file_name, 'a') as f:
+        f.write(f'{args.magnitude}\t{competing_fid}\t{mddgan_fid}\n')
 
-    fid_plot(title, magnitudes, competing_fid, mddgan_fid, args.competing_method_name)
+    #if args.model_name == 'stylegan_celebahq1024':
+    #    title = f'StyleGAN CelebaHQ {args.attribute_name.capitalize()}'
+    #elif args.model_name == 'stylegan_ffhq1024':
+    #    title = f'StyleGAN FFHQ {args.attribute_name.capitalize()}'
+
+    #fid_plot(title, magnitudes, competing_fid, mddgan_fid, args.competing_method_name)
 
 
 if __name__ == '__main__':
