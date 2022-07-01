@@ -75,8 +75,7 @@ def main():
     # retrieve layers to apply the edit
     model_attributes = ATTRIBUTES[args.model_name]
     layer_idx, _ = model_attributes[args.attribute_name]
-    mddgan_layers = parse_indices(layer_idx, min_val=0,
-                            max_val=generator.num_layers - 1)
+    mddgan_layers = parse_indices(layer_idx, min_val=0, max_val=generator.num_layers - 1)
 
     reverse = False
     cond1 = (args.model_name == 'stylegan_celebahq1024' and args.attribute_name in ['gender', 'age'])

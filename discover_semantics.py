@@ -1,6 +1,6 @@
 '''
 Analyze the latent space of the selected GAN model using either one of
-MddGAN or SeFa (or compare the 2) . Then explore the extracted semantics.
+MddGAN or SeFa (or compare the 2) . Then, explore the extracted semantics.
 '''
 
 import os
