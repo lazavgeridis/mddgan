@@ -9,3 +9,5 @@ SeFa_vs_Mdd/*
 *.png
 *.jpg
 runner.sh
+calculate_fid.py
+save_semantic.py
