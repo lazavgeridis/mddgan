@@ -27,16 +27,16 @@ def parse_args():
     parser.add_argument('--save_dir', type=str, default='results',
                         help='Directory to save the visualization pages. '
                              '(default: %(default)s)')
-    parser.add_argument('-L', '--layer_range', type=str, default='all',
+    parser.add_argument('--layer_range', type=str, default='all',
                         help='Indices of layers to interpret. '
                              '(default: %(default)s)')
-    parser.add_argument('-N', '--num_samples', type=int, default=3,
+    parser.add_argument('--num_samples', type=int, default=3,
                         help='Number of samples used for visualization. '
                              '(default: %(default)s)')
-    parser.add_argument('-C', '--num_components', type=int, default=512,
+    parser.add_argument('--num_components', type=int, default=512,
                         help='Number of total directions discovered. Used '
                                 'exclusively for MddGAN. (default: %(default)s)')
-    parser.add_argument('-M', '--num_modes', type=int, default=1,
+    parser.add_argument('--num_modes', type=int, default=1,
                         help='Number of modes of variation the data is assumed '
                             'to consist of. Used exclusively for MddGAN. (default: %(default)s)')
     parser.add_argument('--start_distance', type=float, default=-5.0,
@@ -73,7 +73,7 @@ def main():
                                         gan_type,
                                         args.num_components,
                                         args.num_modes,
-                                        args.layer_range)
+                                        layer_range=args.layer_range)
 
     # Set random seed.
     np.random.seed(args.seed)
@@ -108,12 +108,12 @@ def main():
     if vis_id == 1:
         print(basis.shape)
         lerp_matrix(generator, gan_type, layers, [basis], codes, args.num_samples,
-                distances, args.step, args.save_dir)
+                    distances, args.save_dir)
 
     elif vis_id == 2:
         print(basis.shape)
-        lerp_tensor(generator, layers, basis, dims, codes, args.num_samples,
-                distances, args.step, gan_type, args.save_dir)
+        lerp_tensor(generator, gan_type, layers, basis, dims, codes, args.num_samples,
+                    distances, args.save_dir)
 
     else:
         assert args.method_name == 'both'

@@ -21,7 +21,7 @@ CHECKPOINT_DIR = 'checkpoints'
 #CHECKPOINT_DIR = '/content/gdrive/My Drive/Discovering_Modes_of_Variation/checkpoints'
 
 DIRECTIONS_DICT = {512 : {1 : [512], 2 : [32, 16], 3 : [8, 8, 8],  # 3 : [8, 8, 8], 3 : [16, 8, 4], 3 : [16, 16, 2], 3 : [32, 4, 4]
-                          4 : [4, 4, 4, 8], 5 : [4, 4, 4, 4, 2], 6 : [4, 4, 4, 2, 2, 2], 
+                          4 : [4, 4, 4, 8], 5 : [4, 4, 4, 4, 2], 6 : [4, 4, 4, 2, 2, 2],
                           7 : [4, 4, 2, 2, 2, 2, 2]},
                    200 : {1 : [200], 2 : [20, 10], 3 : [5, 4, 10], 4 : [5, 4, 2, 5]},
                    100 : {1 : [100], 2 : [10, 10], 3 : [4, 5, 5], 4 : [2, 2, 5, 5]},
@@ -60,7 +60,7 @@ def load_generator(model_name):
 
     # Build generator.
     print(f'Building generator for model `{model_name}` ...')
-    generator = build_generator(**model_config)
+    G = build_generator(**model_config)
     print('Finish building generator.')
 
     # Load pre-trained weights.
@@ -73,17 +73,17 @@ def load_generator(model_name):
         print('  Finish downloading checkpoint.')
     checkpoint = torch.load(checkpoint_path, map_location='cpu')
     if 'generator_smooth' in checkpoint:
-        generator.load_state_dict(checkpoint['generator_smooth'])
+        G.load_state_dict(checkpoint['generator_smooth'])
     else:
-        generator.load_state_dict(checkpoint['generator'])
-    generator = generator.eval().requires_grad_(False)
+        G.load_state_dict(checkpoint['generator'])
+    G = G.eval().requires_grad_(False)
     print('Finish loading checkpoint.')
-    return generator
+    return G
 
 
 def parse_indices(obj, min_val=None, max_val=None):
     """
-    Parses indices.
+    Parses layer indices.
 
     The input can be a list or a tuple or a string, which is either a comma
     separated list of numbers 'a, b, c', or a dash separated range 'a - c'.
@@ -91,7 +91,7 @@ def parse_indices(obj, min_val=None, max_val=None):
 
     Parameters
     ----------
-    obj : list or tuple or str
+    obj : list of int or tuple of int or numpy.ndarray or str
         The input object to parse indices from.
     min_val : int
         If not `None`, this function will check that all indices are
@@ -160,7 +160,7 @@ def truncated_svd(X, t):
 
 def hosvd(Q):
     """
-    Truncated higher-order svd.
+    Truncated higher-order svd (or multilinear svd).
 
 
     Calculate the best rank-1 approximation of tensor `Q`
@@ -168,15 +168,16 @@ def hosvd(Q):
 
     Parameters
     ----------
-    Q : numpy.ndarray 
-        desc.
+    Q : numpy.ndarray
 
     Returns
     -------
-    numpy.ndarray
-                  desc.
-    numpy.ndarray
-                  desc.
+    list of numpy.ndarray
+                          The first higher-order singular vectors
+                          along M-1 modes of tensor `Q`.
+    float
+          The first high-order singular value stored as a 1st
+          element in the core tensor S.
 
     """
     U = []
@@ -312,7 +313,7 @@ def mdd(X, K, n_directions, n_iter=5):
     return best_B, best_variation_modes
 
 
-def analyze_latent_space(method, generator, gan_type, n_components, n_modes, layer_range='all'):
+def analyze_latent_space(method, G, gan_type, n_components, n_modes, layer_range='all'):
     """
     Analyze the weight of the pre-trained generator
     and extract meaningful semantics.
@@ -322,22 +323,34 @@ def analyze_latent_space(method, generator, gan_type, n_components, n_modes, lay
     method : {'sefa', 'mddgan'}
         name of the method to use when analyzing the
         weights of the pre-trained generator.
-    generator : torch.nn.module
+    G : torch.nn.module
         generator network with pre-trained weights
         from which semantic information will be
-        extracted.
+        extracted. The dimensionality of the model's
+        latent space is d.
     gan_type : {'pggan', 'stylegan', 'stylegan2'}
         GAN model type.
     n_components : int
         number of directions to discover. Used exclusively
-        for mddgan.
+        for MddGAN.
     n_modes : int
         number of modes of variation. Used exclusively
-        for mddgan.
-    layer_range : 3 different types
+        for MddGAN.
+    layer_range : list of int or tuple of int or numpy.ndarray or str
+        contains the layer indices to analyze (the default is 'all', which
+        implies that all generator layers will be analyzed).
 
     Returns
     -------
+    list of int
+                layer indices of the GAN model that were analyzed
+    numpy.ndarray
+                a basis matrix, which is the result of the GAN latent
+                space analysis. This matrix has shape (d, d) in the
+                general case.
+    list of int
+                the dimensions K_2, K_3, ..., K_M that were used in
+                the mdd algorithm. Used exclusively for MddGAN.
 
     """
     # Get layers.
@@ -345,26 +358,26 @@ def analyze_latent_space(method, generator, gan_type, n_components, n_modes, lay
         layers = [0]
     elif gan_type in ['stylegan', 'stylegan2']:
         if layer_range == 'all':
-            layers = list(range(generator.num_layers))
+            layers = list(range(G.num_layers))
         else:
-            layers = parse_indices(layer_idx,
+            layers = parse_indices(layer_range,
                                    min_val=0,
-                                   max_val=generator.num_layers - 1)
+                                   max_val=G.num_layers - 1)
 
     # Factorize semantics from weight.
     weights = []
     for idx in layers:
         layer_name = f'layer{idx}'
-        if gan_type == 'stylegan2' and idx == generator.num_layers - 1:
+        if gan_type == 'stylegan2' and idx == G.num_layers - 1:
             layer_name = f'output{idx // 2}'
         if gan_type == 'pggan':
-            weight = generator.__getattr__(layer_name).weight
+            weight = G.__getattr__(layer_name).weight
             weight = weight.flip(2, 3).permute(1, 0, 2, 3).flatten(1)
         elif gan_type in ['stylegan', 'stylegan2']:
-            weight = generator.synthesis.__getattr__(layer_name).style.weight.T
+            weight = G.synthesis.__getattr__(layer_name).style.weight.T
         weights.append(weight.cpu().detach().numpy())
     weight = np.concatenate(weights, axis=1).astype(np.float32)
-    
+
     # multilinear matrix decomposition
     if method == 'mddgan':
         modes_dict = DIRECTIONS_DICT[n_components]
@@ -381,7 +394,7 @@ def analyze_latent_space(method, generator, gan_type, n_components, n_modes, lay
 
 def select_bases(basis_tensor, primary_mode_idx, secondary_mode_idx, base_idx, n_modes):
     """
-    desc.
+    Desc.
 
     Parameters
     ----------
@@ -430,24 +443,47 @@ def select_bases(basis_tensor, primary_mode_idx, secondary_mode_idx, base_idx, n
     return bases, subscript
 
 
-def semantic_edit(G, layers, gan_type, proj_code, direction, magnitude):
+def semantic_edit(G, layers, gan_type, proj_codes, direction, magnitude):
     """
-    Produces an edited image : I' = G(z + εn).
+    Produces an edited synthetic image.
+
+    If the original synthetic image is produced by:
+            I = G(z),
+    then the edited synthetic image is produced by:
+            I' = G(z + ε*n),
+    where I and I' are images (CxHxW), `G` is the generator function,
+    z corresponds to `proj_code`, ε corresponds to `magnitude` and
+    n corresponds to `direction`.
 
     Parameters
     ----------
+    G : torch.nn.module
+        generator network that synthesizes images.
+    layers : list of int
+        subset of layers to apply the semantic's effect.
+        Used only in the case of StyleGAN/StyleGAN2.
+    gan_type : {'pggan', 'stylegan', 'stylegan2'}
+        GAN model type.
+    proj_codes : torch.Tensor
+        the result of the 1st generation step G_1(z)=y. Has
+        shape (B, |z|).
+    direction : numpy.ndarray
+        vector direction that encodes a semantic concept.
+    magnitude : float
+        magnitude of the produced effect.
 
     Returns
     -------
+    torch.Tensor
+                 edited synthetic images (BxCxHxW).
 
     """
- 
     if gan_type == 'pggan':
-        proj_code += direction * magnitude
-        image = G(proj_code.cuda())['image'].detach().cpu()
+        proj_codes += direction * magnitude
+        image = G(proj_codes.cuda())['image'].detach().cpu()
     elif gan_type in ['stylegan', 'stylegan2']:
-        proj_code[:, layers, :] += direction * magnitude
-        image = G.synthesis(proj_code.cuda())['image'].detach().cpu()
+        proj_codes[:, layers, :] += direction * magnitude
+        image = G.synthesis(proj_codes.cuda())['image'].detach().cpu()
 
     return image
 
@@ -458,12 +494,14 @@ def get_fake_activations(G,
                         layers,
                         gan_type,
                         magnitude,
-                        fid_size,
-                        trunc_psi,
-                        trunc_layers,
+                        fid_size=50000,
+                        trunc_psi=0.7,
+                        trunc_layers=8,
                         batch_size=8,
                         reverse=False):
     """
+    Collect the activations of the Inception network for edited images.
+
     Collect `fid_size` fake activations by semantically editing
     synthesized images and passing them through the Inception network.
     Do this for both the MddGAN and competing method (InterFaceGAN/SeFa)
@@ -471,19 +509,52 @@ def get_fake_activations(G,
 
     Parameters
     ----------
+    G : torch.nn.module
+        generator network that synthesizes images.
+    inception : torch.nn.module
+        network that receives as input a batch of edited synthetic
+        images (BxCxHxW) and outputs a batch of (avg pool) activations.
+    semantics : list of torch.Tensor
+        contains the semantics to use for each method. Index [0] corresponds
+        to the semantic discovered by the competing method, index [1] to the
+        semantic discovered by MddGAN.
+    layers : list of list of int
+        subset of layers to apply the semantic's effect. Used only in the case
+        of StyleGAN/StyleGAN2. Index [0] corresponds to the list of layers of
+        the competing method, index [1] to the list of layers of MddGAN.
+    gan_type : {'pggan', 'stylegan', 'stylegan2'}
+        GAN model type.
+    magnitude : float
+        magnitude of the produced effect.
+    fid_size : int
+        number of samples to generate for fid calculation (default is 50000).
+    trunc_psi : float
+        a StyleGAN/StyleGAN2 specific value used to "cutoff" some regions
+        of the generator distribution p_g, aka the "truncation trick" (default
+        is 0.7).
+    trunc_layers : int
+        a StyleGAN/StyleGAN2 specific value indicating the number of layers
+        to apply the "truncation trick" (default is 8).
+    batch_size : int
+        used during inference (default is 8).
+    reverse : bool
+        used for certain semantics, in order to evenly compare the results
+        (default is False).
 
     Returns
     -------
+    numpy.ndarray, numpy.ndarray
+                                 inception activations for each method. They
+                                 are matrices with shape (`fid_size`, 2048).
 
     """
-
     mddgan_inception_activations    = []
     competing_inception_activations = []
     print("Getting fake activations...\n")
 
     for _ in tqdm(range(ceil(fid_size / batch_size))):
 
-        # generate batch of fake images
+        # generate batch of latent vectors
         z_vectors = torch.randn(batch_size, G.z_space_dim, device='cuda')
 
         # 
@@ -493,7 +564,7 @@ def get_fake_activations(G,
             codes = G.mapping(z_vectors)['w']
             codes = G.truncation(codes, trunc_psi=trunc_psi, trunc_layers=trunc_layers)
         
-        # edit using the selected attribute vector (`semantic`) and magnitude
+        # edit using the selected attribute vector and magnitude
         competing_edited_images = semantic_edit(G,
                                                 layers[0],
                                                 gan_type,
@@ -519,7 +590,7 @@ def get_fake_activations(G,
 
 
 def key_to_title(attr_key):
-    """."""
+    """Convert a '_' delimeted string to a title."""
     title = attr_key.split('_')
     title = ' '.join(word.capitalize() for word in title)
     return title
