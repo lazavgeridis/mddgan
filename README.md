@@ -26,6 +26,17 @@ they ... .
 ![stylegan_animeface](images/stylegananime_chart.jpg)
 
 # Usage
+**Analyze GAN model of choice and investigate the directions discovered by
+MddGAN**
+
+```
+# Interpret StyleGAN2 FFHQ model
+python discover_semantics.py stylegan2_ffhq1024 mddgan
+
+# Interpret StyleGAN AnimeFaces model
+python discover_semantics.py stylegan_animeface512 mddgan
+```
+
 To recreate the figures present in the thesis the following Google Colab notebooks
 are provided:
 * Figure 4.2 : ` `
