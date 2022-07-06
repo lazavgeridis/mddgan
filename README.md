@@ -26,16 +26,23 @@ they ... .
 ![stylegan_animeface](images/stylegananime_chart.jpg)
 
 # Usage
-**Analyze GAN model of choice and investigate the directions discovered by
-MddGAN**
+
+## Analyze GAN model of choice and investigate the directions discovered by MddGAN or SeFA (or compare the 2)
+Basic execution:
 
 ```
-# Interpret StyleGAN2 FFHQ model
-python discover_semantics.py stylegan2_ffhq1024 mddgan
+# Analyze StyleGAN2 FFHQ model
+python discover_semantics.py stylegan2_ffhq1024 [method_name]
 
-# Interpret StyleGAN AnimeFaces model
-python discover_semantics.py stylegan_animeface512 mddgan
+# Analyze StyleGAN LSUN Bedroom model
+python discover_semantics.py stylegan_bedroom256 [method_name]
+
+# Analyze ProGAN CelebaHQ model
+python discover_semantics.py pggan_celebahq1024 [method_name]
 ```
+where `method_name` refers to one of: `mddgan`, `sefa` or `both`.
+
+To acquire additional control over the execution parameters
 
 To recreate the figures present in the thesis the following Google Colab notebooks
 are provided:

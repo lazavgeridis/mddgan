@@ -162,7 +162,6 @@ def hosvd(Q):
     """
     Truncated higher-order svd (or multilinear svd).
 
-
     Calculate the best rank-1 approximation of tensor `Q`
     using truncated HOSVD.
 
