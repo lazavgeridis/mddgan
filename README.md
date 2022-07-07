@@ -37,7 +37,7 @@ where `model_name` refers to the name of the GAN model you want to discover
 semantics for and `method_name` refers to the method to use when analyzing
 the latent space of the selected GAN model. The list of valid `model_name`'s
 to use can be found at [mddgan/models/model_zoo.py](models/model_zoo.py),
-while `method_name` can be either one of `mddgan`, `sefa`, `both`.
+while `method_name` can be either one of `mddgan`, `sefa` or `both`.
 
 For instance, some sample executions can be:
 
@@ -52,18 +52,22 @@ python discover_semantics.py stylegan_bedroom256 [method_name]
 python discover_semantics.py pggan_celebahq1024 [method_name]
 ```
 
-Note that in the case of StyleGAN models (StyleGAN/StyleGAN2), the above executions will
-analyze _all layers_ of the selected GAN model by default, which will discover directions
-that impact multiple variation factors at once. This behaviour can be modified by using the
-`--layer_range` option. For example, to extract semantics that effect the overall geometric
-properties of the image, you probably want to target the initial layers:
+Note that in the case of StyleGAN/StyleGAN2 models, e.g `stylegan2_ffhq1024` and
+`stylegan_bedroom256` from above, the default behaviour of the program is to analyze
+_all layers_ of the selected model by default, which will discover directions
+that impact multiple variation factors at once. However, this behaviour can be modified by
+using the `layer_range` option. For example, to extract semantics that effect the overall
+geometric properties of the image, you probably want to target the initial layers:
 
 ```
 python discover_semantics.py stylegan2_car512 [method_name] --layer_range 0-3
 ```
+In general, the argument to `layer_range` indicates the layer indices of
+the model to analyze and is of the form: $idx_{1} - idx_{2}$, where
+$idx \in [0, G_{num_layers}]$.
 
 Visualization results will be saved on the `./results` directory by default, but this can be modified
-using the `--save_dir` option.
+using the `save_dir` option.
 
 ### Reproducibility
 To recreate the figures present in the thesis the following Google Colab notebooks
