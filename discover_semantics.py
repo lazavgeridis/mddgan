@@ -88,7 +88,7 @@ def main():
         codes = generator.truncation(codes,
                                      trunc_psi=args.trunc_psi,
                                      trunc_layers=args.trunc_layers)
-    codes = codes.detach().cpu()
+    codes = codes.cpu()
 
     # Visualization : linear interpolation in the GAN latent space.
     distances = np.linspace(args.start_distance, args.end_distance, args.step)

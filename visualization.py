@@ -191,8 +191,8 @@ def interpolation_chart(G,
         #plt.subplots_adjust(left=0.25)  # setting left=0.2 or lower eliminates whitespace between charts
         axis.imshow(postprocess(make_grid(direction_interp, nrow=magnitudes.shape[0])))
         axis.text(0, 0.5, str(text), horizontalalignment='right',
-                verticalalignment='center', fontsize='xx-small',
-                transform=axis.transAxes)
+                  verticalalignment='center', fontsize='xx-small',
+                  transform=axis.transAxes)
 
     return fig
 
@@ -252,8 +252,10 @@ def lerp_matrix(G,
         method_names = [None]
 
     # visualize the effect of `directions_per_page` directions on each page
-    for begin in tqdm(range(0, max_columns, directions_per_page)):
+    pbar = tqdm(range(0, max_columns, directions_per_page))
+    for begin in pbar:
         end = min(max_columns, begin + directions_per_page)
+        pbar.set_description(desc=f'Creating chart for directions {begin}-{end}... ')
         charts = []
 
         # create an interpolation chart for each sample
@@ -335,7 +337,10 @@ def lerp_tensor(G,
 
     # investigate each mode of the `basis` tensor
     # tensor has shape (d, K_2, K_3, ..., K_M)
-    for primary_mode_idx, primary_mode_dim in tqdm(enumerate(basis_dims)):
+    pbar = tqdm(enumerate(basis_dims))
+    for primary_mode_idx, primary_mode_dim in pbar:
+        pbar.set_description(desc='Creating chart for tensor mode'
+                                f' {primary_mode_idx + 2}... ')
         mode_dir = os.path.join(results_dir, f'Mode_{primary_mode_idx + 1}')
         os.makedirs(mode_dir, exist_ok=True)
         for secondary_mode_idx, secondary_mode_dim in enumerate(basis_dims):

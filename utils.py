@@ -479,12 +479,12 @@ def semantic_edit(G, layers, gan_type, proj_codes, direction, magnitude):
     """
     if gan_type == 'pggan':
         proj_codes += direction * magnitude
-        image = G(proj_codes.cuda())['image'].detach().cpu()
+        image = G(proj_codes.cuda())['image']
     elif gan_type in ['stylegan', 'stylegan2']:
         proj_codes[:, layers, :] += direction * magnitude
-        image = G.synthesis(proj_codes.cuda())['image'].detach().cpu()
+        image = G.synthesis(proj_codes.cuda())['image']
 
-    return image
+    return image.cpu()
 
 
 def get_fake_activations(G,

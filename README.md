@@ -30,7 +30,7 @@ they ... .
 In this section, we provide some brief usage instructions for
 `discover_semantics.py`, `plot_fid.py` and `cosine_similarity.py`.
 
-#### Analyze GAN model of choice and investigate the directions discovered by MddGAN or SeFA (or compare the 2)
+### Analyze GAN model of choice and investigate the directions discovered by MddGAN or SeFA (or compare the 2)
 For a basic execution, run the following:
 
 ```
@@ -67,12 +67,12 @@ python discover_semantics.py stylegan2_car512 [method_name] --layer_range 0-3
 ```
 In general, the argument to `layer_range` indicates the layer indices of
 the model to analyze and is of the form: $idx_{1} - idx_{2}$, where
-$idx \in [0, G_{number of layers}]$.
+$idx \in [0, L]$ (L is the total number of layers in $G$).
 
 Other than simply discovering surprising directions, MddGAN can additionally
 separate them into groups. In essence, by tensorizing the produced multilinear
-basis $\mathcal{mathbf{B}}$, one can attempt to gather all directions encoding
-the same variability factor by slicing tensor $\mathcal{mathbf{B}}$ on the
+basis $\mathcal{\mathbf{B}}$, one can attempt to gather all directions encoding
+the same variability factor by slicing tensor $\mathcal{\mathbf{B}}$ on the
 appropriate mode. To achieve this, we can use the `num_modes` option. The
 argument to `num_modes` sets the estimated number of variation factors the
 Generator has learnt to model. For instance, assuming 3 modes of variation:
@@ -93,7 +93,7 @@ Regardless of how you run the program, the visualization results will be saved
 on the `./results` directory by default, but this can be modified using the
 `save_dir` option.
 
-#### Reproducibility
+### Reproducibility
 * Mention that the code of this repo requires a machine with GPU to run. If the reader doesn't
   have a GPU available, he/she can still run the notebooks.
 
@@ -105,7 +105,23 @@ are provided:
 * Figure 5.3 : ` `
 
 #### Evaluation
-**Mention that the ./models directory is copied from sefa + usage of interfacegan directions**
+cover `cosine_similarity.py` and `fid_plot.py`.
+
+In the directory [mddgan/fid_files](fid_files), we provide some pre-computed
+FID scores for some distinctive facial attributes (pose, gender, age, smile,
+eyeglasses).
+
+For example to plot the FID scores for the pose discovered attribute and for
+the StyleGAN CelebaHQ model, comparing MddGAN to SeFa, run:
+
+```
+python plot_fid.py stylegan_celebahq1024 sefa pose
+```
+
+The program will locate the corresponding file, in this case the file is 
+[mddgan/fid_files/stylegan_celebahq1024_interfacegan_pose.txt](fid_files/stylegan_celebahq1024_interfacegan_pose.txt),
+gather the FID scores and produce the corresponding plot.
 
 
 # Acknowledgements
+**Mention that the ./models directory is copied from sefa + usage of interfacegan directions**
