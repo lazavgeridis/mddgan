@@ -30,7 +30,7 @@ def parse_args():
     parser.add_argument('--semantic_dir', type=str, default='semantics',
                         help='Directory to search for the attribute vectors. '
                              '(default: %(default)s)')
-    parser.add_argument('-N', '--num_samples', type=int, default=3,
+    parser.add_argument('-N', '--num_samples', type=int, default=4,
                         help='Number of samples used for visualization. '
                              '(default: %(default)s)')
     parser.add_argument('--trunc_psi', type=float, default=0.7,

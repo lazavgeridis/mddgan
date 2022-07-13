@@ -562,10 +562,14 @@ def create_semantic_chart(G,
             else:
                 # load the corresponding semantic 
                 semantic = np.load(f'{args.semantic_dir}/{args.method_name}/{args.model_name}_{key}.npy')
+                semantic = torch.from_numpy(semantic)
 
                 #
-                layer_idx = item[0]
-                layers = parse_indices(layer_idx, min_val=0, max_val=G.num_layers - 1)
+                if args.method_name == 'interfacegan':
+                    layers = list(range(G.num_layers))
+                else:
+                    layer_idx = item[0]
+                    layers = parse_indices(layer_idx, min_val=0, max_val=G.num_layers - 1)
                 magnitude = item[1]
 
                 # create attribute chart

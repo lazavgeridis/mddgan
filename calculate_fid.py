@@ -29,6 +29,8 @@ def parse_args():
     parser.add_argument('dataset_stats', type=str, help='path to pre-computed dataset mean '
                                             'and covariance')
     parser.add_argument('magnitude', type=float, help='magnitude of change')
+    parser.add_argument('--fids_directory', type=str, default='fid_files',
+                        help='directory to create the text file')
     parser.add_argument('--batch_size', type=int, default=8,
                         help='Mini-batch size when generating fake images.'
                              '(default: %(default)s)')
@@ -78,7 +80,7 @@ def main():
     mddgan_layers = parse_indices(layer_idx, min_val=0, max_val=generator.num_layers - 1)
 
     reverse = False
-    cond1 = (args.model_name == 'stylegan_celebahq1024' and args.attribute_name in ['gender', 'age'])
+    cond1 = (args.model_name == 'stylegan_celebahq1024' and args.attribute_name in ['gender', 'age', 'eyeglasses'])
     cond2 = (args.model_name == 'stylegan_ffhq1024' and
             args.competing_method_name == 'interfacegan' and args.attribute_name in ['age', 'eyeglasses', 'gender', 'smile'])
     cond3 = (args.model_name == 'stylegan_ffhq1024' and
@@ -109,7 +111,8 @@ def main():
     mddgan_fid = fid50k(args.dataset_stats, mddgan_activ)
 
     file_name = f'{args.model_name}_{args.competing_method_name}_{args.attribute_name}.txt'
-    with open(file_name, 'a') as f:
+    file_path = os.path.join(args.fids_directory, file_name)
+    with open(file_path, 'a') as f:
         f.write(f'{args.magnitude}\t{competing_fid}\t{mddgan_fid}\n')
 
     #if args.model_name == 'stylegan_celebahq1024':

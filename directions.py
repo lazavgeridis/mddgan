@@ -35,14 +35,15 @@ ATTRIBUTES = {
             },
 
         'stylegan_celebahq1024':
-            {'age':('5-7', 0.0),
-             'eyeglasses':('0-5', 0.0),
-             'gender':('0-1', 0.0),
-             'pose':('0-3', 0.0),
-             'smile':('3', 0.0),
-             'face_shape_1':('2', 0.0),
-             'zoom':('0-3', 0.0),
-             'hair':('1-3', 0.0)
+            {'initial_image':('all', 5.0),
+             'age':('5-7', 2.0),
+             'eyeglasses':('0-5', 2.0),
+             'gender':('0-1', 2.0),
+             'pose':('0-3', 2.0),
+             'smile':('3', -2.0),
+             #'face_shape_1':('2', 0.0),
+             #'zoom':('0-3', 0.0),
+             #'hair':('1-3', 0.0)
             },
 
         'stylegan_ffhq1024':
