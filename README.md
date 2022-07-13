@@ -26,7 +26,9 @@ they ... .
 ![stylegan_animeface](images/stylegananime_chart.jpg)
 
 
+
 # Usage
+**User should install requirements file first.**
 
 ## Discovering semantic concepts in the GAN latent space
 ### Basic Execution
@@ -89,16 +91,11 @@ the default 512, run:
 python discover_semantics.py stylegan2_car512 mddgan --num_components 200
 ```
 
-Regardless of how you run the program, the visualization results will be saved
-on the `./results` directory by default, but this can be modified using the
-`save_dir` option.
-
-### Edit Intensity Selection
+### Selecting the Editing Magnitude
 talk about the magnitude of the edit `start_distance` and `end_distance`.
 
 ## Evaluation
-(cover `cosine_similarity.py` and `fid_plot.py`)
-
+### FID Scores
 In the directory [mddgan/fid_files](fid_files), we provide some pre-computed
 FID scores for some distinctive facial attributes (pose, gender, age, smile,
 eyeglasses).
@@ -114,6 +111,9 @@ The program will locate the corresponding file, in this case the file is
 [mddgan/fid_files/stylegan_celebahq1024_interfacegan_pose.txt](fid_files/stylegan_celebahq1024_interfacegan_pose.txt),
 gather the FID scores and produce the corresponding plot.
 
+### Calculating Correlation Between Discovered Attributes 
+cover `cosine_similarity.py`
+
 ## Reproducibility
 * Mention that the code of this repo requires a machine with GPU to run. If the reader doesn't
   have a GPU available, he/she can still run the notebooks.
@@ -124,6 +124,7 @@ are provided:
 * Figures 4.3-4.4 and 4.6-4.11 : ` `
 * Figure 5.1-5.2 and 5.4 : ` `
 * Figure 5.3 : ` `
+
 
 
 # Acknowledgements
