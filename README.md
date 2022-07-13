@@ -111,7 +111,7 @@ The program will locate the corresponding file, in this case the file is
 [mddgan/fid_files/stylegan_celebahq1024_interfacegan_pose.txt](fid_files/stylegan_celebahq1024_interfacegan_pose.txt),
 gather the FID scores and produce the corresponding plot.
 
-### Calculating Correlation Between Discovered Attributes 
+### Correlation Between Discovered Attributes 
 cover `cosine_similarity.py`
 
 ## Reproducibility
@@ -128,4 +128,15 @@ are provided:
 
 
 # Acknowledgements
+This project could not exist if it weren't for the excellent implementations
+mentioned below:
+* The [SeFa](https://github.com/genforce/sefa) project, from which a substantial
+part of the code of this project is inspired. The [mddgan/models](models)
+directory used here is borrowed from SeFa.
+* The [InterFaceGAN](https://github.com/genforce/interfacegan) project, from
+which we borrow the ProGAN and StyleGAN directions used in our comparisons.
+* The [GANLatentDiscovery](https://github.com/anvoynov/GANLatentDiscovery)
+project, from which we got the inspiration for the core visualization operation
+implemented here.
+
 **Mention that the ./models directory is copied from sefa + usage of interfacegan directions**
