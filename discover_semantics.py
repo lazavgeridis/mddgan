@@ -69,11 +69,11 @@ def main():
     generator = load_generator(args.model_name).cuda()
     gan_type = parse_gan_type(generator)
     layers, basis, dims = analyze_latent_space('mddgan' if args.method_name == 'both' else args.method_name,
-                                        generator,
-                                        gan_type,
-                                        args.num_components,
-                                        args.num_modes,
-                                        layer_range=args.layer_range)
+                                                generator,
+                                                gan_type,
+                                                args.num_components,
+                                                args.num_modes,
+                                                layer_range=args.layer_range)
 
     # Set random seed.
     np.random.seed(args.seed)
@@ -119,12 +119,12 @@ def main():
         assert args.method_name == 'both'
         if dims is not None:
             _, basis_sefa, _ = analyze_latent_space('sefa',
-                    generator,
-                    None,
-                    None,
-                    args.layer_idx)
-        lerp_matrix(generator, gan_type, layers, [basis, basis_sefa], codes, args.num_samples,
-                distances, args.step, args.save_dir)
+                                                    generator,
+                                                    None,
+                                                    None,
+                                                    args.layer_idx)
+        lerp_matrix(generator, gan_type, layers, [basis, basis_sefa], codes,
+                    args.num_samples, distances, args.step, args.save_dir)
 
 
 if __name__ == '__main__':
