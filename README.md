@@ -14,7 +14,7 @@ along the dimensions of the produced multilinear basis, according to the ...
 they ... .
 
 
-# Results
+# Sample Results
 
 **StyleGAN2 FFHQ**
 
@@ -29,7 +29,11 @@ they ... .
 model, even the ones on the "Initial Image" column.
 
 # Usage
-**User should install requirements file first.**
+To replicate the exact environment used during the development of this repo,
+simply run (python 3.8 or later) :
+```
+pip install -r requirements.txt
+```
 
 ## Discovering semantic concepts in the GAN latent space
 ### Basic Execution

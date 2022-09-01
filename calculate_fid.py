@@ -67,6 +67,8 @@ def main():
     torch.manual_seed(args.seed)
 
     # load semantic attribute for each method
+    if args.model_name == 'stylegan_ffhq1024' and competing_method_name == 'sefa' and args.attribute_name == 'pose':
+        args.attribute_name == 'pose_inverted'
     mddgan_attr_vector = np.load(f'{args.semantic_dir}/mddgan'
                             f'/{args.model_name}_{args.attribute_name}.npy')
     mddgan_attr_vector = torch.from_numpy(mddgan_attr_vector).cuda()
@@ -110,17 +112,12 @@ def main():
     competing_fid = fid50k(args.dataset_stats, competing_activ)
     mddgan_fid = fid50k(args.dataset_stats, mddgan_activ)
 
+    if args.attribute_name == 'pose_inverted':
+        args.attribute_name == 'pose'
     file_name = f'{args.model_name}_{args.competing_method_name}_{args.attribute_name}.txt'
     file_path = os.path.join(args.fids_directory, file_name)
     with open(file_path, 'a') as f:
         f.write(f'{args.magnitude}\t{competing_fid}\t{mddgan_fid}\n')
-
-    #if args.model_name == 'stylegan_celebahq1024':
-    #    title = f'StyleGAN CelebaHQ {args.attribute_name.capitalize()}'
-    #elif args.model_name == 'stylegan_ffhq1024':
-    #    title = f'StyleGAN FFHQ {args.attribute_name.capitalize()}'
-
-    #fid_plot(title, magnitudes, competing_fid, mddgan_fid, args.competing_method_name)
 
 
 if __name__ == '__main__':
