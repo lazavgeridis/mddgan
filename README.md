@@ -30,7 +30,7 @@ model, even the ones on the "Initial Image" column.
 
 # Usage
 To replicate the exact environment used during the development of this repo,
-simply run (python 3.8 or later) :
+simply run:
 ```
 pip install -r requirements.txt
 ```
@@ -137,11 +137,9 @@ produce a correlation matrix.
 
 
 ## Google Colab Notebooks
-* Mention that the code of this repo requires a machine with GPU to run. If the reader doesn't
-  have a GPU available, he/she can still run the notebooks.
-
-To recreate the figures present in the thesis the following Google Colab notebooks
-are provided:
+The code of this repo requires a machine with an Nvidia GPU to run. However, if you
+don't have one available, you can still run the following Google Colab notebooks to
+recreate the figures present in the thesis:
 * Figure 4.2 : ` `
 * Figures 4.3-4.4 and 4.6-4.11 : ` `
 * Figure 5.1-5.2 and 5.4 : ` `
@@ -160,5 +158,3 @@ which we borrow the ProGAN and StyleGAN directions used in our comparisons.
 * The [GANLatentDiscovery](https://github.com/anvoynov/GANLatentDiscovery)
 project, from which we got the inspiration for the core visualization operation
 implemented here.
-
-**Mention that the ./models directory is copied from sefa + usage of interfacegan directions**

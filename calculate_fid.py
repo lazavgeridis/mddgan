@@ -67,7 +67,7 @@ def main():
     torch.manual_seed(args.seed)
 
     # load semantic attribute for each method
-    if args.model_name == 'stylegan_ffhq1024' and competing_method_name == 'sefa' and args.attribute_name == 'pose':
+    if args.model_name == 'stylegan_ffhq1024' and args.competing_method_name == 'sefa' and args.attribute_name == 'pose':
         args.attribute_name == 'pose_inverted'
     mddgan_attr_vector = np.load(f'{args.semantic_dir}/mddgan'
                             f'/{args.model_name}_{args.attribute_name}.npy')
