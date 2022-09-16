@@ -6,12 +6,12 @@ text can be found [here](https://pergamos.lib.uoa.gr/uoa/dl/object/3059772).
 
 In short, this thesis proposes an unsupervised method to discover a wide range
 of interpretable vector directions by analyzing the space of the generator's
-parameters, otherwise known as the GAN latent space. The extracted directions
+parameters, otherwise known as the _GAN latent space_. The extracted directions
 can then be exploited in order to produce impressive visual edits, on par with
-the current sota methods. Furthermore, the proposed method does not only reveal
-the explanatory factors learnt by the generator, but it can also arrange them
-along the dimensions of the produced multilinear basis, according to the ...
-they ... .
+the current SOTA methods. Furthermore, the proposed method does not only reveal
+the explanatory factors learnt by the generator, but it also attempts to arrange
+them along the dimensions of the produced multilinear basis, according to the
+semantic content they encode.
 
 
 # Sample Results
