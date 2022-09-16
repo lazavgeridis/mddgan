@@ -18,7 +18,6 @@ from evaluate import get_inception_output
 
 
 CHECKPOINT_DIR = 'checkpoints'
-#CHECKPOINT_DIR = '/content/gdrive/My Drive/Discovering_Modes_of_Variation/checkpoints'
 
 DIRECTIONS_DICT = {512 : {1 : [512], 2 : [32, 16], 3 : [8, 8, 8],  # 3 : [8, 8, 8], 3 : [16, 8, 4], 3 : [16, 16, 2], 3 : [32, 4, 4]
                           4 : [4, 4, 4, 8], 5 : [4, 4, 4, 4, 2], 6 : [4, 4, 4, 2, 2, 2],
@@ -393,16 +392,24 @@ def analyze_latent_space(method, G, gan_type, n_components, n_modes, layer_range
 
 def select_bases(basis_tensor, primary_mode_idx, secondary_mode_idx, base_idx, n_modes):
     """
-    Desc.
+    Extracts slices from the given multilinear basis tensor. In particular, it
+    slices input basis along dimension with index `primary_mode_idx` + 1.
 
     Parameters
     ----------
 
     Returns
     -------
+    numpy.ndarray
+        a matrix of shape (d, |K_m|). The columns of this matrix store the
+        basis vectors of the sliced dimension.
+
+        e.g basis tensor has shape (d, K_2, K_3) and if we want to extract basis vectors
+        of the 1st variation mode (`primary_mode_idx`=0) the result is a matrix
+        of shape (d, K_2).
 
     """
-    # basis tensor has shape : (d, K2, K3)
+    # basis tensor has shape : (d, K2, K3) -> 2 modes of variation
     if n_modes == 2:
         if primary_mode_idx == 0:   # (:, :, idx)
             bases = basis_tensor[:, :, base_idx]
@@ -411,7 +418,7 @@ def select_bases(basis_tensor, primary_mode_idx, secondary_mode_idx, base_idx, n
             bases = basis_tensor[:, base_idx, :]
             subscript = f':, {base_idx}, :'
 
-    # basis tensor has shape : (d, K2, K3, K4)
+    # basis tensor has shape : (d, K2, K3, K4) -> 3 modes of variation
     elif n_modes == 3:
         if primary_mode_idx == 0:
             if secondary_mode_idx == 1:     # (:, :, idx, 0)
@@ -435,9 +442,47 @@ def select_bases(basis_tensor, primary_mode_idx, secondary_mode_idx, base_idx, n
                 bases = basis_tensor[:, 0, base_idx, :]
                 subscript = f':, 0, {base_idx}, :'
 
-    # basis tensor has shape : (d, K2, K3, K4, K5)
+    # basis tensor has shape : (d, K2, K3, K4, K5) -> 4 modes of variation
     elif n_modes == 4:
-        pass
+        if primary_mode_idx == 0:
+            if secondary_mode_idx == 1:     # (:, :, idx, 0, 0)
+                bases = basis_tensor[:, :, base_idx, 0, 0]
+                subscript = f':, :, {base_idx}, 0, 0'
+            elif secondary_mode_idx == 2:   # (:, :, 0, idx, 0)
+                bases = basis_tensor[:, :, 0, base_idx, 0]
+                subscript = f':, :, 0, {base_idx}, 0'
+            elif secondary_mode_idx == 3:   # (:, :, 0, 0, idx)
+                bases = basis_tensor[:, :, 0, 0, base_idx]
+                subscript = f':, :, 0, 0, {base_idx}'
+        elif primary_mode_idx == 1:
+            if secondary_mode_idx == 0:     # (:, idx, :, 0, 0)
+                bases = basis_tensor[:, base_idx, :, 0, 0]
+                subscript = f':, {base_idx}, :, 0, 0'
+            elif secondary_mode_idx == 2:   # (:, 0, :, idx, 0)
+                bases = basis_tensor[:, 0, :, base_idx, 0]
+                subscript = f':, 0, :, {base_idx}, 0'
+            elif secondary_mode_idx == 3:   # (:, 0, :, 0, idx)
+                bases = basis_tensor[:, 0, :, 0, base_idx]
+                subscript = f':, 0, :, 0, {base_idx}'
+        elif primary_mode_idx == 2:
+            if secondary_mode_idx == 0:     # (:, idx, 0, :, 0)
+                bases = basis_tensor[:, base_idx, 0, :, 0]
+                subscript = f':, {base_idx}, 0, :, 0'
+            elif secondary_mode_idx == 1:   # (:, 0, idx, :, 0)
+                bases = basis_tensor[:, 0, base_idx, :, 0]
+                subscript = f':, 0, {base_idx}, :, 0'
+            elif secondary_mode_idx == 3:   # (:, 0, 0, :, idx)
+                bases = basis_tensor[:, 0, 0, :, base_idx]
+                subscript = f':, 0, 0, :, {base_idx}'
+        elif primary_mode_idx == 3:
+            if secondary_mode_idx == 0:     # (:, idx, 0, 0, :)
+                bases = basis_tensor[:, base_idx, 0, 0, :]
+                subscript = f':, {base_idx}, 0, 0, :'
+            elif secondary_mode_idx == 1:   # (:, 0, idx, 0, :)
+                bases = basis_tensor[:, 0, base_idx, 0, :]
+                subscript = f':, 0, {base_idx}, 0, :'
+            elif secondary_mode_idx == 2:   # (:, 0, 0, idx, :)
+                bases = basis_tensor[:, 0, 0, base_idx, :]
 
     return bases, subscript
 

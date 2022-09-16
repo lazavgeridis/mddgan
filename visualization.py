@@ -335,6 +335,9 @@ def lerp_tensor(G,
     if basis.ndim == 2:
         basis = basis.reshape(basis.shape[0], *basis_dims)
 
+    assert (basis.ndim > 2 and basis.ndim < 6), ('More than 4 modes of '
+            'variation are not supported yet.')
+
     # investigate each mode of the `basis` tensor
     # tensor has shape (d, K_2, K_3, ..., K_M)
     pbar = tqdm(enumerate(basis_dims))
@@ -499,8 +502,8 @@ def fid_plot(title, x_axis, competing_fid, mddgan_fid, competing_name):
     fig.suptitle(title)
     ax.set_xlabel('Magnitude')
     ax.set_ylabel('FID')
-    ax.plot(x_axis, competing_fid, label=competing_name)
-    ax.plot(x_axis, mddgan_fid, label='mddgan')
+    ax.plot(x_axis, competing_fid, 'o-', label=competing_name)
+    ax.plot(x_axis, mddgan_fid, 'o-', label='mddgan')
     ax.legend()
     fig.savefig('fid.png')
 

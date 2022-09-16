@@ -11,3 +11,4 @@ SeFa_vs_Mdd/*
 runner.sh
 calculate_fid.py
 save_semantic.py
+evaluate.py

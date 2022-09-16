@@ -1,6 +1,7 @@
 '''
 Measure the correlation between the discovered directions.
 '''
+import matplotlib.pyplot as plt
 import numpy as np
 import torch
 import argparse
@@ -37,21 +38,17 @@ def cosine_similarity(args):
 
         results.append(sims)
 
-    maxlen = max([len(attr_name) for attr_name in attribute_names])
-    for idx, attr_name in enumerate(attribute_names):
-        if idx == 0:
-            print(' ' * (maxlen + 1), f'{attr_name.capitalize()}', sep='', end='')
-        else:
-            print(f'\t{attr_name.capitalize()}', sep='', end='')
-    print()
-    for idx, attr_name in enumerate(attribute_names):
-        if idx == 0:
-            print(' ' * (maxlen + 1), '_' * len(attr_name), sep='', end='')
-        else:
-            print('\t', '_' * len(attr_name), sep='', end='')
-    print()
-    for attr_name, scores in zip(attribute_names, results):
-        print(f'{attr_name.capitalize()}\t| {scores}')
+    attribute_names = [attr_name.capitalize() for attr_name in attribute_names]
+
+    # table
+    fig, ax = plt.subplots()
+
+    ax.xaxis.set_visible(False)
+    ax.yaxis.set_visible(False)
+    ax.table(cellText=results, rowLabels=attribute_names,
+            colLabels=attribute_names, loc='center')
+
+    plt.show()
 
 
 if __name__ == '__main__':
