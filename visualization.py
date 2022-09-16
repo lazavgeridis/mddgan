@@ -475,7 +475,7 @@ def create_comparison_chart(G,
     plt.show()
 
 
-def fid_plot(title, x_axis, competing_fid, mddgan_fid, competing_name):
+def fid_plot(title, x_axis, competing_fid, mddgan_fid, competing_name, fname='fid.png'):
     """
     Plot FID scores of the 2 methods for the same discovered direction.
 
@@ -506,6 +506,7 @@ def fid_plot(title, x_axis, competing_fid, mddgan_fid, competing_name):
     ax.plot(x_axis, mddgan_fid, 'o-', label='mddgan')
     ax.legend()
     fig.savefig('fid.png')
+    print('Saved plot to {}.'.format(fname))
 
 
 def create_attribute_chart(proj_codes,

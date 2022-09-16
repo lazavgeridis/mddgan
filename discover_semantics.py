@@ -120,11 +120,12 @@ def main():
         if dims is not None:
             _, basis_sefa, _ = analyze_latent_space('sefa',
                                                     generator,
+                                                    gan_type,
                                                     None,
                                                     None,
-                                                    args.layer_idx)
+                                                    layer_range=args.layer_range)
         lerp_matrix(generator, gan_type, layers, [basis, basis_sefa], codes,
-                    args.num_samples, distances, args.step, args.save_dir)
+                    args.num_samples, distances, args.save_dir)
 
 
 if __name__ == '__main__':
