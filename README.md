@@ -141,10 +141,10 @@ The code of this repo requires a machine with an Nvidia GPU to run (with the exc
 and `plot_fid.py`) .
 However, if you don't have one available, you can still run the following Google Colab notebooks to
 recreate the figures present in the thesis:
-* Figure 4.2 : `layer_ranges_chart.ipynb`
-* Figures 4.3-4.4 and 4.6-4.11 : `interpolation_across_each_mode.ipynb`
-* Figure 5.1-5.2 and 5.4 : `mddgan_comparisons_v1.ipynb`
-* Figure 5.3 : `diversity_of_discovered_semantics.ipynb`
+* Figure 4.2 : `layer_ranges_chart.ipynb` -> [Colab link](https://colab.research.google.com/github/lazavgeridis/mddgan/blob/main/notebooks/layer_ranges_chart.ipynb)
+* Figures 4.3-4.4 and 4.6-4.11 : `interpolation_across_each_mode.ipynb` -> [Colab link](https://colab.research.google.com/github/lazavgeridis/mddgan/blob/main/notebooks/interpolation_across_each_mode.ipynb)
+* Figure 5.1-5.2 and 5.4 : `mddgan_comparisons_v1.ipynb` -> [Colab link](https://colab.research.google.com/github/lazavgeridis/mddgan/blob/main/notebooks/mddgan_comparisons_v1.ipynb)
+* Figure 5.3 : `diversity_of_discovered_semantics.ipynb` -> [Colab link](https://colab.research.google.com/github/lazavgeridis/mddgan/blob/main/notebooks/diversity_of_discovered_semantics.ipynb)
 
 
 
