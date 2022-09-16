@@ -140,10 +140,10 @@ produce a correlation matrix.
 The code of this repo requires a machine with an Nvidia GPU to run. However, if you
 don't have one available, you can still run the following Google Colab notebooks to
 recreate the figures present in the thesis:
-* Figure 4.2 : ` `
-* Figures 4.3-4.4 and 4.6-4.11 : ` `
-* Figure 5.1-5.2 and 5.4 : ` `
-* Figure 5.3 : ` `
+* Figure 4.2 : `layer_ranges_chart.ipynb`
+* Figures 4.3-4.4 and 4.6-4.11 : `interpolation_across_each_mode.ipynb`
+* Figure 5.1-5.2 and 5.4 : `mddgan_comparisons_v1.ipynb`
+* Figure 5.3 : `diversity_of_discovered_semantics.ipynb`
 
 
 
