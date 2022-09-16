@@ -137,8 +137,9 @@ produce a correlation matrix.
 
 
 ## Google Colab Notebooks
-The code of this repo requires a machine with an Nvidia GPU to run. However, if you
-don't have one available, you can still run the following Google Colab notebooks to
+The code of this repo requires a machine with an Nvidia GPU to run (with the exception of `cosine_similarity.py`
+and `plot_fid.py`) .
+However, if you don't have one available, you can still run the following Google Colab notebooks to
 recreate the figures present in the thesis:
 * Figure 4.2 : `layer_ranges_chart.ipynb`
 * Figures 4.3-4.4 and 4.6-4.11 : `interpolation_across_each_mode.ipynb`
